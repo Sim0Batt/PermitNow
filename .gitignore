@@ -1,0 +1,9 @@
+server/.gitignore
+server/.idea/AndroidProjectSystem.xml
+server/.idea/gradle.xml
+server/.idea/kotlinc.xml
+server/.idea/misc.xml
+server/.idea/vcs.xml
+server/gradle/wrapper/gradle-wrapper.jar
+server/gradle/wrapper/gradle-wrapper.properties
+server/.gitignore
