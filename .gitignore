@@ -7,3 +7,4 @@ server/.idea/vcs.xml
 server/gradle/wrapper/gradle-wrapper.jar
 server/gradle/wrapper/gradle-wrapper.properties
 server/.gitignore
+.DS_Store

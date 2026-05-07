@@ -1,5 +1,7 @@
 plugins {
     kotlin("jvm") version "2.2.20"
+    kotlin("plugin.serialization") version "2.2.20"
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = "org.example"
@@ -56,6 +58,10 @@ dependencies {
 
     // XML
     implementation("org.simpleframework:simple-xml:2.7.1")
+
+
+    // MongoDB
+    implementation("org.litote.kmongo:kmongo-coroutine-serialization:5.6.0")
 
     testImplementation(kotlin("test"))
 }
