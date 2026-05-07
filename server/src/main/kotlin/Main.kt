@@ -1,5 +1,5 @@
 import utils.TypesOfRun
-
+import server.ServerConfig
 
 internal object Main{
     @JvmStatic
@@ -17,13 +17,6 @@ internal object Main{
             TypesOfRun.HELP -> println(HELP_MESSAGE)
             TypesOfRun.TEST -> {
 
-                val configuration = ReadXMLResources.getConfiguration()
-                val connection = Database.connect(
-                    configuration.database!!.dbConnectionString,
-                    configuration.database!!.dbDriver,
-                    configuration.database!!.dbUser,
-                    configuration.database!!.dbPassword
-                )
             }
         }
     }

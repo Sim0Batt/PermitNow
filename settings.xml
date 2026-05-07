@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<Configuration>
+    <Debug></Debug>
+
+    <Server>
+        <Host></Host>
+        <Port></Port>
+    </Server>
+
+    <Database>
+        <ConnectionUrl></ConnectionUrl>
+        <DBName></DBName>
+    </Database>
+
+    
+    <GoogleApiKey></GoogleApiKey>
+
+
+</Configuration>
