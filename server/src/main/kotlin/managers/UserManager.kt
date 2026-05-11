@@ -14,28 +14,30 @@ import server.models.output.LoginResponseJson
 import configuration.PermitNowConfiguration
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
 import org.bouncycastle.crypto.params.Argon2Parameters
+import org.litote.kmongo.and
 import java.security.SecureRandom
 import java.util.Base64
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
-class UserManager (val connection: DatabaseConfig){
+class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: PermitNowConfiguration){
 
     val usersCollection = connection.userCollection
+
+
+
 
     suspend fun register(registerJson: RegisterJson): String {
         try {
             // TODO(constraints): check for duplicate fiscalCode before inserting
-            val hashedPassword = hashPassword(registerJson.password)
-            val encryptedFiscalCode = encryptFiscalCode(registerJson.fiscalCode, PermitNowConfiguration.aesKey)
 
             val user = UserDocument(
                 name = registerJson.name,
                 surname = registerJson.surname,
                 email = registerJson.email,
-                password = hashedPassword,
-                fiscalCode = encryptedFiscalCode,
+                password = hashPassword(registerJson.password),
+                fiscalCode = encryptFiscalCode(registerJson.fiscalCode, permitNowConfiguration.aesKey),
                 role = registerJson.role,
                 verified = registerJson.verified
             )
@@ -49,15 +51,14 @@ class UserManager (val connection: DatabaseConfig){
         }
     }
 
-    suspend fun login(loginJson: LoginJson): LoginResponseJson {
-        // TODO(constraints): validate email format and password presence
+    suspend fun login(loginJson: LoginJson): String {
+        println("Login attempt: ${loginJson.email} ${loginJson.password}")
         val user = usersCollection.findOne(UserDocument::email eq loginJson.email)
             ?: throw UserException("User not found")
 
-        // TODO(auth): verify hashed password and issue JWT
-        return LoginResponseJson(
-            userId = user._id.toHexString()
-        )
+        if(!verifyPassword(loginJson.password, user.password)) throw UserException("Wrong password")
+
+        return user._id.toHexString()
     }
 
     suspend fun changePassword(userId: String, currentPassword: String, newPassword: String) {
@@ -91,22 +92,23 @@ class UserManager (val connection: DatabaseConfig){
         )
     }
 
-    private fun hashPassword(password: String): String {
-        val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
-        val params = Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)
+    fun hashPassword(password: String): String {
+        val localSalt = ByteArray(16).also { SecureRandom().nextBytes(it) }
+        val hashParams = Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)
             .withVersion(Argon2Parameters.ARGON2_VERSION_13)
-            .withSalt(salt)
+            .withSalt(localSalt)
             .withParallelism(1)
             .withMemoryAsKB(65536)
             .withIterations(3)
             .build()
+
         val gen = Argon2BytesGenerator()
-        gen.init(params)
+        gen.init(hashParams)
         val hash = ByteArray(32)
         gen.generateBytes(password.toCharArray(), hash)
+
         val b64 = Base64.getEncoder().withoutPadding()
-        return "\$argon2id\$v=19\$m=65536,t=3,p=1\$${b64.encodeToString(salt)}\$${b64.encodeToString(hash)}"
-    }
+        return "\$argon2id\$v=19\$m=65536,t=3,p=1\$${b64.encodeToString(localSalt)}\$${b64.encodeToString(hash)}"    }
 
     private fun encryptFiscalCode(fiscalCode: String, aesKeyBase64: String): String {
         val key = SecretKeySpec(Base64.getDecoder().decode(aesKeyBase64), "AES")
@@ -116,5 +118,27 @@ class UserManager (val connection: DatabaseConfig){
         val ciphertext = cipher.doFinal(fiscalCode.toByteArray(Charsets.UTF_8))
         val b64 = Base64.getEncoder()
         return "${b64.encodeToString(iv)}:${b64.encodeToString(ciphertext)}"
+    }
+
+    fun verifyPassword(password: String, dbPassword: String): Boolean {
+        val parts = dbPassword.split("$").filter { it.isNotEmpty() }
+
+        val storedSalt = Base64.getDecoder().decode(parts[3])
+        val expectedHash = Base64.getDecoder().decode(parts[4])
+
+        val verifyParams = Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)
+            .withVersion(Argon2Parameters.ARGON2_VERSION_13)
+            .withSalt(storedSalt)
+            .withParallelism(1)
+            .withMemoryAsKB(65536)
+            .withIterations(3)
+            .build()
+
+        val gen = Argon2BytesGenerator()
+        gen.init(verifyParams)
+        val hash = ByteArray(32)
+        gen.generateBytes(password.toCharArray(), hash)
+
+        return hash.contentEquals(expectedHash)
     }
 }

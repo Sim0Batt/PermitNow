@@ -56,7 +56,7 @@ fun Application.module() {
 
 
     // Managers
-    val userManager = UserManager(connection)
+    val userManager = UserManager(connection, permitNowConfiguration)
 
 
     // Routes

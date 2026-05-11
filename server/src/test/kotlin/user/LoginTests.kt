@@ -1,5 +1,7 @@
 package user
 
+import configuration.PermitNowConfiguration
+import configuration.ReadXMLResources
 import kotlinx.coroutines.runBlocking
 import managers.UserManager
 import org.junit.jupiter.api.AfterAll
@@ -14,6 +16,7 @@ import server.models.input.LoginJson
 class LoginTests {
 
     private lateinit var userManager: UserManager
+    val permitNowConfiguration = PermitNowConfiguration
 
     var testUserId: String = ""
 
@@ -22,7 +25,7 @@ class LoginTests {
     fun init() {
         runBlocking {
             val testDB = MockDatabase.createDatabase()
-            userManager = UserManager(testDB)
+            userManager = UserManager(testDB, permitNowConfiguration)
             val userInDb = testDB.userCollection.findOne(database.documents.UserDocument::email eq  "test@test.com")
             testUserId = userInDb?._id?.toHexString() ?: throw IllegalStateException("Mock Database is not initialized")
         }
@@ -43,7 +46,7 @@ class LoginTests {
 
         println("Query Result: $result")
         Assertions.assertNotNull(result)
-        Assertions.assertEquals(testUserId, result.userId)
+        Assertions.assertEquals(testUserId, result)
     }
 
     @Test
