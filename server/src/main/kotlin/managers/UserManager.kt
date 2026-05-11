@@ -25,12 +25,15 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
 
     val usersCollection = connection.userCollection
 
-
-
-
     suspend fun register(registerJson: RegisterJson): String {
         try {
-            // TODO(constraints): check for duplicate fiscalCode before inserting
+            if(!isValidRegistration(registerJson)) throw UserException("Invalid registration data")
+            if(usersCollection.countDocuments(UserDocument::email eq registerJson.email) > 0) {
+                throw UserException("User already exists with this email")
+            }
+            if(usersCollection.countDocuments(UserDocument::fiscalCode eq decryptFiscalCode(registerJson.fiscalCode)) > 0) {
+                throw UserException("User already exists with this fiscal code")
+            }
 
             val user = UserDocument(
                 name = registerJson.name,
@@ -52,6 +55,7 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
     }
 
     suspend fun login(loginJson: LoginJson): String {
+        // TODO: constraint validation
         println("Login attempt: ${loginJson.email} ${loginJson.password}")
         val user = usersCollection.findOne(UserDocument::email eq loginJson.email)
             ?: throw UserException("User not found")
@@ -68,7 +72,7 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
         val user = usersCollection.findOne(UserDocument::_id eq ObjectId(userId))
             ?: throw UserException("User not found")
 
-        if (user.password != currentPassword) throw UserException("Current password is incorrect")
+        if (verifyPassword(currentPassword, user.password)) throw UserException("Current password is incorrect")
 
         usersCollection.updateOne(UserDocument::_id eq ObjectId(userId), setValue(UserDocument::password, newPassword))
     }
@@ -92,6 +96,11 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
         )
     }
 
+
+
+
+
+    // UTILS FUNCTIONS
     fun hashPassword(password: String): String {
         val localSalt = ByteArray(16).also { SecureRandom().nextBytes(it) }
         val hashParams = Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)
@@ -120,7 +129,7 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
         return "${b64.encodeToString(iv)}:${b64.encodeToString(ciphertext)}"
     }
 
-    fun verifyPassword(password: String, dbPassword: String): Boolean {
+    private fun verifyPassword(password: String, dbPassword: String): Boolean {
         val parts = dbPassword.split("$").filter { it.isNotEmpty() }
 
         val storedSalt = Base64.getDecoder().decode(parts[3])
@@ -141,4 +150,26 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
 
         return hash.contentEquals(expectedHash)
     }
+
+    fun decryptFiscalCode(encryptedFiscalCode: String): String {
+        val parts = encryptedFiscalCode.split(":")
+        val iv = Base64.getDecoder().decode(parts[0])
+        val ciphertext = Base64.getDecoder().decode(parts[1])
+
+        val key = SecretKeySpec(Base64.getDecoder().decode(permitNowConfiguration.aesKey), "AES")
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(128, iv))
+
+        return String(cipher.doFinal(ciphertext), Charsets.UTF_8)
+    }
+
+    private fun isValidRegistration(registerJson: RegisterJson): Boolean {
+        return registerJson.name.isNotBlank() &&
+                registerJson.surname.isNotBlank() &&
+                registerJson.email.isNotBlank() &&
+                registerJson.password.isNotBlank() &&
+                registerJson.role.isNotBlank() &&
+                registerJson.fiscalCode.isNotBlank()
+    }
+
 }
