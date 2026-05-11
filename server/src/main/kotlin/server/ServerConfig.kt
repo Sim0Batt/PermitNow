@@ -16,7 +16,9 @@ import kotlinx.serialization.json.Json
 import exceptions.UserException
 import managers.UserManager
 import server.models.input.ChangePasswordJson
+import server.models.input.LoginJson
 import server.models.input.RegisterJson
+import server.models.output.LoginResponseJson
 
 
 
@@ -58,6 +60,19 @@ fun Application.module() {
 
     // Routes
     routing {
+        post("/login") {
+            // TODO(constraints): validate request body fields
+            val loginJson = call.receive<LoginJson>()
+            try {
+                val response = userManager.login(loginJson)
+                call.respond(HttpStatusCode.OK, response)
+            } catch (e: UserException) {
+                // TODO(auth): distinguish "user not found" from "wrong password" once auth layer is added
+                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to e.customMessage))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
         post ("/register") {
             val registerJson = call.receive<RegisterJson>()
             try {
