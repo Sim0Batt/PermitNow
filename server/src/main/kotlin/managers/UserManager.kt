@@ -4,8 +4,10 @@ import database.DatabaseConfig
 import database.documents.UserDocument
 import exceptions.UserException
 import org.bson.types.ObjectId
+import org.litote.kmongo.combine
 import org.litote.kmongo.eq
 import org.litote.kmongo.setValue
+import server.models.input.ProfileUpdateJson
 import server.models.input.LoginJson
 import server.models.input.RegisterJson
 import server.models.output.LoginResponseJson
@@ -58,5 +60,24 @@ class UserManager (val connection: DatabaseConfig){
         if (user.password != currentPassword) throw UserException("Current password is incorrect")
 
         usersCollection.updateOne(UserDocument::_id eq ObjectId(userId), setValue(UserDocument::password, newPassword))
+    }
+
+    suspend fun updateProfile(userId: String, profileData: ProfileUpdateJson) {
+        if (profileData.name.isBlank()) throw UserException("Name cannot be empty")
+        if (profileData.surname.isBlank()) throw UserException("Surname cannot be empty")
+        if (profileData.email.isBlank()) throw UserException("Email cannot be empty")
+
+        usersCollection.findOne(UserDocument::_id eq ObjectId(userId))
+            ?: throw UserException("User not found")
+
+        usersCollection.updateOne(
+            UserDocument::_id eq ObjectId(userId),
+            combine(
+                setValue(UserDocument::name, profileData.name),
+                setValue(UserDocument::surname, profileData.surname),
+                setValue(UserDocument::email, profileData.email),
+                setValue(UserDocument::fiscalCode, profileData.fiscalCode)
+            )
+        )
     }
 }

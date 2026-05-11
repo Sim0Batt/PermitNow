@@ -16,6 +16,7 @@ import kotlinx.serialization.json.Json
 import exceptions.UserException
 import managers.UserManager
 import server.models.input.ChangePasswordJson
+import server.models.input.ProfileUpdateJson
 import server.models.input.LoginJson
 import server.models.input.RegisterJson
 import server.models.output.LoginResponseJson
@@ -100,6 +101,22 @@ fun Application.module() {
                 val data = call.receive<ChangePasswordJson>()
                 userManager.changePassword(userId, data.currentPassword, data.newPassword)
                 call.respond(HttpStatusCode.OK, mapOf("message" to "Password updated successfully"))
+            } catch (e: UserException) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
+        post ("/user/{userId}/profile") {
+            val userId = call.parameters["userId"]
+            if (userId == null) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing userId parameter"))
+                return@post
+            }
+            try {
+                val data = call.receive<ProfileUpdateJson>()
+                userManager.updateProfile(userId, data)
+                call.respond(HttpStatusCode.OK, mapOf("message" to "Profile updated successfully"))
             } catch (e: UserException) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
             } catch (e: Exception) {
