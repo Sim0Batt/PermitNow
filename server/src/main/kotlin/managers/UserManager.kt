@@ -11,19 +11,31 @@ import server.models.input.ProfileUpdateJson
 import server.models.input.LoginJson
 import server.models.input.RegisterJson
 import server.models.output.LoginResponseJson
+import configuration.PermitNowConfiguration
+import org.bouncycastle.crypto.generators.Argon2BytesGenerator
+import org.bouncycastle.crypto.params.Argon2Parameters
+import java.security.SecureRandom
+import java.util.Base64
+import javax.crypto.Cipher
+import javax.crypto.spec.GCMParameterSpec
+import javax.crypto.spec.SecretKeySpec
 
 class UserManager (val connection: DatabaseConfig){
 
     val usersCollection = connection.userCollection
 
-    suspend fun register(registerJson: RegisterJson): String{
+    suspend fun register(registerJson: RegisterJson): String {
         try {
+            // TODO(constraints): check for duplicate fiscalCode before inserting
+            val hashedPassword = hashPassword(registerJson.password)
+            val encryptedFiscalCode = encryptFiscalCode(registerJson.fiscalCode, PermitNowConfiguration.aesKey)
+
             val user = UserDocument(
                 name = registerJson.name,
                 surname = registerJson.surname,
                 email = registerJson.email,
-                password = registerJson.password,
-                fiscalCode = registerJson.fiscalCode,
+                password = hashedPassword,
+                fiscalCode = encryptedFiscalCode,
                 role = registerJson.role,
                 verified = registerJson.verified
             )
@@ -31,7 +43,7 @@ class UserManager (val connection: DatabaseConfig){
             usersCollection.insertOne(user)
 
             return user._id.toHexString()
-        }catch (e: Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
             throw UserException(e.message.toString())
         }
@@ -77,5 +89,32 @@ class UserManager (val connection: DatabaseConfig){
                 setValue(UserDocument::fiscalCode, profileData.fiscalCode)
             )
         )
+    }
+
+    private fun hashPassword(password: String): String {
+        val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
+        val params = Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)
+            .withVersion(Argon2Parameters.ARGON2_VERSION_13)
+            .withSalt(salt)
+            .withParallelism(1)
+            .withMemoryAsKB(65536)
+            .withIterations(3)
+            .build()
+        val gen = Argon2BytesGenerator()
+        gen.init(params)
+        val hash = ByteArray(32)
+        gen.generateBytes(password.toCharArray(), hash)
+        val b64 = Base64.getEncoder().withoutPadding()
+        return "\$argon2id\$v=19\$m=65536,t=3,p=1\$${b64.encodeToString(salt)}\$${b64.encodeToString(hash)}"
+    }
+
+    private fun encryptFiscalCode(fiscalCode: String, aesKeyBase64: String): String {
+        val key = SecretKeySpec(Base64.getDecoder().decode(aesKeyBase64), "AES")
+        val iv = ByteArray(12).also { SecureRandom().nextBytes(it) }
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, key, GCMParameterSpec(128, iv))
+        val ciphertext = cipher.doFinal(fiscalCode.toByteArray(Charsets.UTF_8))
+        val b64 = Base64.getEncoder()
+        return "${b64.encodeToString(iv)}:${b64.encodeToString(ciphertext)}"
     }
 }

@@ -14,4 +14,7 @@ object PermitNowConfiguration {
 
     @field:Element(name = "GoogleApiKey", required = false)
     var googleApiKey: String = ""
+
+    @field:Element(name = "AesKey", required = false)
+    var aesKey: String = ""
 }

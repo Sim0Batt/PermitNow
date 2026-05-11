@@ -63,6 +63,9 @@ dependencies {
     // MongoDB
     implementation("org.litote.kmongo:kmongo-coroutine-serialization:5.6.0")
 
+    // Crypto (Argon2id + AES-256-GCM)
+    implementation("org.bouncycastle:bcprov-jdk18on:1.79")
+
     testImplementation(kotlin("test"))
 }
 
