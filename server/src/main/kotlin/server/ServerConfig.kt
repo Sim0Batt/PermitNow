@@ -65,6 +65,14 @@ fun Application.module() {
                 call.respond( "FA")
             }
         }
+        // Backend has no session/JWT to invalidate; this endpoint confirms the action and is a placeholder for future audit logging.
+        post ("/logout") {
+            try {
+                call.respond(HttpStatusCode.OK, mapOf("message" to "Logout successful"))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
     }
 }
 
