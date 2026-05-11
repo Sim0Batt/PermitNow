@@ -13,7 +13,9 @@ import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.*
 import kotlinx.serialization.json.Json
+import exceptions.UserException
 import managers.UserManager
+import server.models.input.ChangePasswordJson
 import server.models.input.RegisterJson
 
 
@@ -69,6 +71,22 @@ fun Application.module() {
         post ("/logout") {
             try {
                 call.respond(HttpStatusCode.OK, mapOf("message" to "Logout successful"))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
+        post ("/user/{userId}/change-password") {
+            val userId = call.parameters["userId"]
+            if (userId == null) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing userId parameter"))
+                return@post
+            }
+            try {
+                val data = call.receive<ChangePasswordJson>()
+                userManager.changePassword(userId, data.currentPassword, data.newPassword)
+                call.respond(HttpStatusCode.OK, mapOf("message" to "Password updated successfully"))
+            } catch (e: UserException) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
             }

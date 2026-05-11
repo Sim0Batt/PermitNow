@@ -3,6 +3,9 @@ package managers
 import database.DatabaseConfig
 import database.documents.UserDocument
 import exceptions.UserException
+import org.bson.types.ObjectId
+import org.litote.kmongo.eq
+import org.litote.kmongo.setValue
 import server.models.input.RegisterJson
 
 class UserManager (val connection: DatabaseConfig){
@@ -28,5 +31,17 @@ class UserManager (val connection: DatabaseConfig){
             e.printStackTrace()
             throw UserException(e.message.toString())
         }
+    }
+
+    suspend fun changePassword(userId: String, currentPassword: String, newPassword: String) {
+        if (newPassword.isBlank()) throw UserException("New password cannot be empty")
+        if (currentPassword.isBlank()) throw UserException("Current password cannot be empty")
+
+        val user = usersCollection.findOne(UserDocument::_id eq ObjectId(userId))
+            ?: throw UserException("User not found")
+
+        if (user.password != currentPassword) throw UserException("Current password is incorrect")
+
+        usersCollection.updateOne(UserDocument::_id eq ObjectId(userId), setValue(UserDocument::password, newPassword))
     }
 }
