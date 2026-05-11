@@ -12,6 +12,7 @@ import server.models.input.LoginJson
 import server.models.input.RegisterJson
 import server.models.output.LoginResponseJson
 import configuration.PermitNowConfiguration
+import exceptions.EncryptionException
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
 import org.bouncycastle.crypto.params.Argon2Parameters
 import org.litote.kmongo.and
@@ -55,45 +56,64 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
     }
 
     suspend fun login(loginJson: LoginJson): String {
-        // TODO: constraint validation
-        println("Login attempt: ${loginJson.email} ${loginJson.password}")
-        val user = usersCollection.findOne(UserDocument::email eq loginJson.email)
-            ?: throw UserException("User not found")
+        try{
+            // TODO: constraint validation
 
-        if(!verifyPassword(loginJson.password, user.password)) throw UserException("Wrong password")
+            println("Login attempt: ${loginJson.email} ${loginJson.password}")
+            val user = usersCollection.findOne(UserDocument::email eq loginJson.email)
+                ?: throw UserException("User not found")
 
-        return user._id.toHexString()
+            if (!verifyPassword(loginJson.password, user.password)) throw UserException("Wrong password")
+
+            return user._id.toHexString()
+        }catch (e: Exception){
+            e.printStackTrace()
+            throw UserException(e.message.toString())
+        }
     }
 
     suspend fun changePassword(userId: String, currentPassword: String, newPassword: String) {
-        if (newPassword.isBlank()) throw UserException("New password cannot be empty")
-        if (currentPassword.isBlank()) throw UserException("Current password cannot be empty")
+        try{
+            if (newPassword.isBlank()) throw UserException("New password cannot be empty")
+            if (currentPassword.isBlank()) throw UserException("Current password cannot be empty")
 
-        val user = usersCollection.findOne(UserDocument::_id eq ObjectId(userId))
-            ?: throw UserException("User not found")
+            val user = usersCollection.findOne(UserDocument::_id eq ObjectId(userId))
+                ?: throw UserException("User not found")
 
-        if (verifyPassword(currentPassword, user.password)) throw UserException("Current password is incorrect")
+            if (verifyPassword(currentPassword, user.password)) throw UserException("Current password is incorrect")
 
-        usersCollection.updateOne(UserDocument::_id eq ObjectId(userId), setValue(UserDocument::password, newPassword))
+            usersCollection.updateOne(
+                UserDocument::_id eq ObjectId(userId),
+                setValue(UserDocument::password, newPassword)
+            )
+        }catch (e: Exception){
+            e.printStackTrace()
+            throw UserException(e.message.toString())
+        }
     }
 
     suspend fun updateProfile(userId: String, profileData: ProfileUpdateJson) {
-        if (profileData.name.isBlank()) throw UserException("Name cannot be empty")
-        if (profileData.surname.isBlank()) throw UserException("Surname cannot be empty")
-        if (profileData.email.isBlank()) throw UserException("Email cannot be empty")
+        try{
+            if (profileData.name.isBlank()) throw UserException("Name cannot be empty")
+            if (profileData.surname.isBlank()) throw UserException("Surname cannot be empty")
+            if (profileData.email.isBlank()) throw UserException("Email cannot be empty")
 
-        usersCollection.findOne(UserDocument::_id eq ObjectId(userId))
-            ?: throw UserException("User not found")
+            usersCollection.findOne(UserDocument::_id eq ObjectId(userId))
+                ?: throw UserException("User not found")
 
-        usersCollection.updateOne(
-            UserDocument::_id eq ObjectId(userId),
-            combine(
-                setValue(UserDocument::name, profileData.name),
-                setValue(UserDocument::surname, profileData.surname),
-                setValue(UserDocument::email, profileData.email),
-                setValue(UserDocument::fiscalCode, profileData.fiscalCode)
+            usersCollection.updateOne(
+                UserDocument::_id eq ObjectId(userId),
+                combine(
+                    setValue(UserDocument::name, profileData.name),
+                    setValue(UserDocument::surname, profileData.surname),
+                    setValue(UserDocument::email, profileData.email),
+                    setValue(UserDocument::fiscalCode, profileData.fiscalCode)
+                )
             )
-        )
+        }catch (e: Exception){
+            e.printStackTrace()
+            throw UserException(e.message.toString())
+        }
     }
 
 
@@ -102,31 +122,42 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
 
     // UTILS FUNCTIONS
     fun hashPassword(password: String): String {
-        val localSalt = ByteArray(16).also { SecureRandom().nextBytes(it) }
-        val hashParams = Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)
-            .withVersion(Argon2Parameters.ARGON2_VERSION_13)
-            .withSalt(localSalt)
-            .withParallelism(1)
-            .withMemoryAsKB(65536)
-            .withIterations(3)
-            .build()
+        try{
+            val localSalt = ByteArray(16).also { SecureRandom().nextBytes(it) }
+            val hashParams = Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)
+                .withVersion(Argon2Parameters.ARGON2_VERSION_13)
+                .withSalt(localSalt)
+                .withParallelism(1)
+                .withMemoryAsKB(65536)
+                .withIterations(3)
+                .build()
 
-        val gen = Argon2BytesGenerator()
-        gen.init(hashParams)
-        val hash = ByteArray(32)
-        gen.generateBytes(password.toCharArray(), hash)
+            val gen = Argon2BytesGenerator()
+            gen.init(hashParams)
+            val hash = ByteArray(32)
+            gen.generateBytes(password.toCharArray(), hash)
 
-        val b64 = Base64.getEncoder().withoutPadding()
-        return "\$argon2id\$v=19\$m=65536,t=3,p=1\$${b64.encodeToString(localSalt)}\$${b64.encodeToString(hash)}"    }
+            val b64 = Base64.getEncoder().withoutPadding()
+            return "\$argon2id\$v=19\$m=65536,t=3,p=1\$${b64.encodeToString(localSalt)}\$${b64.encodeToString(hash)}"
+        }catch (e: Exception){
+            e.printStackTrace()
+            throw EncryptionException("Error hashing password: ${e.message}")
+        }
+    }
 
     private fun encryptFiscalCode(fiscalCode: String, aesKeyBase64: String): String {
-        val key = SecretKeySpec(Base64.getDecoder().decode(aesKeyBase64), "AES")
-        val iv = ByteArray(12).also { SecureRandom().nextBytes(it) }
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, key, GCMParameterSpec(128, iv))
-        val ciphertext = cipher.doFinal(fiscalCode.toByteArray(Charsets.UTF_8))
-        val b64 = Base64.getEncoder()
-        return "${b64.encodeToString(iv)}:${b64.encodeToString(ciphertext)}"
+        try{
+            val key = SecretKeySpec(Base64.getDecoder().decode(aesKeyBase64), "AES")
+            val iv = ByteArray(12).also { SecureRandom().nextBytes(it) }
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(Cipher.ENCRYPT_MODE, key, GCMParameterSpec(128, iv))
+            val ciphertext = cipher.doFinal(fiscalCode.toByteArray(Charsets.UTF_8))
+            val b64 = Base64.getEncoder()
+            return "${b64.encodeToString(iv)}:${b64.encodeToString(ciphertext)}"
+        }catch (e: Exception){
+            e.printStackTrace()
+            throw EncryptionException("Error encrypting fiscal code: ${e.message}")
+        }
     }
 
     private fun verifyPassword(password: String, dbPassword: String): Boolean {
