@@ -4,16 +4,12 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 class LoginResponseJson(
-    val userId: String,
-    val email: String,
-    val role: String
+    val userId: String
 ) {
     override fun toString(): String {
         return """
 {
-    "userId": "$userId",
-    "email": "$email",
-    "role": "$role"
+    "userId": "$userId"
 }
         """.trimIndent()
     }

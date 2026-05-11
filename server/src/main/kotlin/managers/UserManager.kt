@@ -44,9 +44,7 @@ class UserManager (val connection: DatabaseConfig){
 
         // TODO(auth): verify hashed password and issue JWT
         return LoginResponseJson(
-            userId = user._id.toHexString(),
-            email = user.email,
-            role = user.role
+            userId = user._id.toHexString()
         )
     }
 
