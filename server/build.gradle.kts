@@ -67,6 +67,9 @@ dependencies {
     implementation("org.bouncycastle:bcprov-jdk18on:1.79")
 
     testImplementation(kotlin("test"))
+    testImplementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo:4.24.0")
+    testImplementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo.spring4x:4.24.0")
+
 }
 
 tasks.test {
