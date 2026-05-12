@@ -3,78 +3,151 @@ HOST: https://polls.apiblueprint.org/
 
 # PermitNow
 
-Polls is a simple API allowing consumers to view polls and vote in them.
+Documentazione delle API RESTful per il backend di PermitNow.
 
-## Questions Collection [/questions]
+## Group Gestione Utenti 
+Endpoint dedicati alla gestione degli utenti sui servizi PermitNow.
 
-### List All Questions [GET]
-
+### Register [POST /register]
+Permette la registrazione di un utente sul sistema PermitNow.
++ Request (application/JSON)
+    + Attributes
+        + email: email con cui l'utente si vuole registrare sul sistema. (string, required)
+        + password: password con cui l'utente si vuole registrare sul sistema. (string, required)
+        + name: nome dell'utente che si vuole registrare. (string, required)
+        + surname: cognome dell'utente che si vuole registrare. (string, required)
+        + fiscalCode: codice fiscale dell'utente che si vuole registrare. (string, required)
+        
 + Response 200 (application/json)
 
-        [
-            {
-                "question": "Favourite programming language?",
-                "published_at": "2015-08-05T08:40:51.620Z",
-                "choices": [
-                    {
-                        "choice": "Swift",
-                        "votes": 2048
-                    }, {
-                        "choice": "Python",
-                        "votes": 1024
-                    }, {
-                        "choice": "Objective-C",
-                        "votes": 512
-                    }, {
-                        "choice": "Ruby",
-                        "votes": 256
-                    }
-                ]
-            }
-        ]
+    + Attributes
+        + userId: L'ID del nuovo utente creato
 
-### Create a New Question [POST]
-
-You may create your own question using this action. It takes a JSON
-object containing a question and a collection of answers in the
-form of choices.
-
-+ Request (application/json)
-
-        {
-            "question": "Favourite programming language?",
-            "choices": [
-                "Swift",
-                "Python",
-                "Objective-C",
-                "Ruby"
-            ]
-        }
-
-+ Response 201 (application/json)
-
-    + Headers
-
-            Location: /questions/2
-
++ Response 409 (application/json)
     + Body
 
             {
-                "question": "Favourite programming language?",
-                "published_at": "2015-08-05T08:40:51.620Z",
-                "choices": [
-                    {
-                        "choice": "Swift",
-                        "votes": 0
-                    }, {
-                        "choice": "Python",
-                        "votes": 0
-                    }, {
-                        "choice": "Objective-C",
-                        "votes": 0
-                    }, {
-                        "choice": "Ruby",
-                        "votes": 0
-                    }
-                ]
+                "error": "User already exists with this email"
             }
+
++ Response 404 (application/json)
+    + Body
+
+            {
+                "error": "Invalid Registration Data"
+            }
+            
+            
+### Login [POST /login]
+Permette il login di un utente sul sistema PermitNow.
++ Request (application/JSON)
+    + Attributes
+        + email: email con cui l'utente si è registrato sul sistema.
+        + password: password con cui l'utente si è registrato sul sistema.
++ Response 200 (application/json)
+
+    + Attributes
+        + userId: L'ID univoco dell'utente generato da MongoDB
+
++ Response 400 (application/json)
+    + Body
+            
+            {
+                "error": "Invalid login data"
+            }
+
++ Response 404 (application/json)
+    + Body
+            
+            {
+                "error": "User not found"
+            }
+            
+
+
+### Aggiorna Profilo [PUT /users/{userId}]
+Aggiorna i dati anagrafici di base dell'utente.
+
++ Parameters
+    + userId: `6a020410abe0a8034525a54c` (string, required) - L'ObjectId di MongoDB dell'utente.
+
++ Request (application/json)
+    + Attributes (ProfileUpdateJson)
+
++ Response 200 (application/json)
+    + Body
+            
+            {
+                "message": "Profile updated successfully"
+            }
+
++ Response 400 (application/json)
+    + Body
+            
+            {
+                "error": "Name cannot be empty"
+            }
+
++ Response 404 (application/json)
+    + Body
+            
+            {
+                "error": "User not found"
+            }
+
+
+### Cambia Password [POST /users/{userId}/password]
+Permette all'utente di cambiare la propria password sul sistema, previa verifica di quella attuale.
+
++ Parameters
+    + userId: L'ObjectId di MongoDB dell'utente.
+
++ Request (application/json)
+    + Attributes (ChangePasswordJson)
+
++ Response 200 (application/json)
+    + Body
+            
+            {
+                "message": "Password updated successfully"
+            }
+
++ Response 400 (application/json)
+    + Body
+            
+            {
+                "error": "New password cannot be empty"
+            }
+
++ Response 401 (application/json)
+    + Body
+            
+            {
+                "error": "Current password is incorrect"
+            }
+            
+
+
+
+# Data Structures
+
+## LoginJson (object)
++ email: `` (string, required)
++ password: `` (string, required)
+
+## RegisterJson (object)
++ name: `` (string, required)
++ surname: `` (string, required)
++ email: `` (string, required)
++ password: `` (string, required)
++ fiscalCode: `` (string, required)
+
+## ProfileUpdateJson (object)
++ name: `` (string, required)
++ surname: `` (string, required)
++ email: `` (string, required)
++ fiscalCode: `` (string, required)
+
+## ChangePasswordJson (object)
++ currentPassword: `` (string, required)
++ newPassword: `` (string, required)
