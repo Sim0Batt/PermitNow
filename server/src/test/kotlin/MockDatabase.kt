@@ -1,18 +1,24 @@
+import configuration.PermitNowConfiguration
 import database.DatabaseConfig
 import database.documents.UserDocument
 import de.flapdoodle.embed.mongo.distribution.Version
 import de.flapdoodle.embed.mongo.transitions.Mongod
 import de.flapdoodle.embed.mongo.transitions.RunningMongodProcess
 import de.flapdoodle.reverse.TransitionWalker
+import managers.UserManager
 import org.bson.types.ObjectId
 import org.litote.kmongo.coroutine.CoroutineDatabase
 import org.litote.kmongo.coroutine.coroutine
 import org.litote.kmongo.reactivestreams.KMongo
+import server.permitNowConfiguration
 
 object MockDatabase {
     private lateinit var runningMongo: TransitionWalker.ReachedState<RunningMongodProcess>
 
     lateinit var testDatabase: CoroutineDatabase
+
+
+
     suspend fun createDatabase(): DatabaseConfig {
         runningMongo = Mongod.instance().start(Version.Main.V7_0)
 
@@ -25,12 +31,14 @@ object MockDatabase {
         testDatabase = client.getDatabase("test_db")
 
 
+        val userManager = UserManager(config, permitNowConfiguration)
+
         val testUser = UserDocument(
             name = "Test",
             surname = "Test",
             email = "test@test.com",
-            password = "test",
-            fiscalCode = "TSTTST00A00A000",
+            password = userManager.hashPassword("test"),
+            fiscalCode = userManager.encryptFiscalCode("TSTTST00A00A000", permitNowConfiguration.aesKey),
             role = "user",
             verified = true
         )
@@ -39,8 +47,8 @@ object MockDatabase {
             name = "Test1",
             surname = "Test1",
             email = "test1@test.com",
-            password = "test",
-            fiscalCode = "TSTTST00A00A001",
+            password = userManager.hashPassword("test"),
+            fiscalCode = userManager.encryptFiscalCode("TSTTST00A00A000", PermitNowConfiguration.aesKey),
             role = "admin",
             verified = true
         )
@@ -49,8 +57,8 @@ object MockDatabase {
             name = "Test2",
             surname = "Test2",
             email = "test2@test.com",
-            password = "test",
-            fiscalCode = "TSTTST00A00A002",
+            password = userManager.hashPassword("test"),
+            fiscalCode = userManager.encryptFiscalCode("TSTTST00A00A000", PermitNowConfiguration.aesKey),
             role = "user",
             verified = false
         )

@@ -145,7 +145,7 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
         }
     }
 
-    private fun encryptFiscalCode(fiscalCode: String, aesKeyBase64: String): String {
+    fun encryptFiscalCode(fiscalCode: String, aesKeyBase64: String): String {
         try{
             val key = SecretKeySpec(Base64.getDecoder().decode(aesKeyBase64), "AES")
             val iv = ByteArray(12).also { SecureRandom().nextBytes(it) }

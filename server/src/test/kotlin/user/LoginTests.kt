@@ -11,12 +11,12 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.litote.kmongo.eq
 import server.models.input.LoginJson
+import server.permitNowConfiguration
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LoginTests {
 
     private lateinit var userManager: UserManager
-    val permitNowConfiguration = PermitNowConfiguration
 
     var testUserId: String = ""
 
