@@ -62,7 +62,6 @@ fun Application.module() {
     // Routes
     routing {
         post("/login") {
-            // TODO(constraints): validate request body fields
             val loginJson = call.receive<LoginJson>()
             try {
                 val response = userManager.login(loginJson)

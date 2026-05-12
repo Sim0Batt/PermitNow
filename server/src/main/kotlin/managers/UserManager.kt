@@ -57,7 +57,7 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
 
     suspend fun login(loginJson: LoginJson): String {
         try{
-            // TODO: constraint validation
+            if (!isValidLogin(loginJson)) throw UserException("Invalid login data")
 
             println("Login attempt: ${loginJson.email} ${loginJson.password}")
             val user = usersCollection.findOne(UserDocument::email eq loginJson.email)
@@ -201,6 +201,10 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
                 registerJson.password.isNotBlank() &&
                 registerJson.role.isNotBlank() &&
                 registerJson.fiscalCode.isNotBlank()
+    }
+
+    private fun isValidLogin(loginJson: LoginJson): Boolean {
+        return loginJson.email.isNotBlank() && loginJson.password.isNotBlank()
     }
 
 }
