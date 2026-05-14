@@ -75,6 +75,8 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
         try{
             if (newPassword.isBlank()) throw UserException("New password cannot be empty")
             if (currentPassword.isBlank()) throw UserException("Current password cannot be empty")
+            if (newPassword.length < 8) throw UserException("New password must be at least 8 characters")
+            if (newPassword == currentPassword) throw UserException("New password must differ from current password")
 
             val user = usersCollection.findOne(UserDocument::_id eq ObjectId(userId))
                 ?: throw UserException("User not found")
@@ -93,22 +95,40 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
 
     suspend fun updateProfile(userId: String, profileData: ProfileUpdateJson) {
         try{
-            if (profileData.name.isBlank()) throw UserException("Name cannot be empty")
-            if (profileData.surname.isBlank()) throw UserException("Surname cannot be empty")
-            if (profileData.email.isBlank()) throw UserException("Email cannot be empty")
-
-            usersCollection.findOne(UserDocument::_id eq ObjectId(userId))
+            val user = usersCollection.findOne(UserDocument::_id eq ObjectId(userId))
                 ?: throw UserException("User not found")
 
-            usersCollection.updateOne(
-                UserDocument::_id eq ObjectId(userId),
-                combine(
-                    setValue(UserDocument::name, profileData.name),
-                    setValue(UserDocument::surname, profileData.surname),
-                    setValue(UserDocument::email, profileData.email),
-                    setValue(UserDocument::fiscalCode, encryptFiscalCode(profileData.fiscalCode, permitNowConfiguration.aesKey))
+            if (profileData.email.isBlank()) throw UserException("Email cannot be empty")
+            val emailRegex = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
+            if (!emailRegex.matches(profileData.email)) throw UserException("Invalid email format")
+
+            if (!user.verified) {
+                if (profileData.name.isBlank()) throw UserException("Name cannot be empty")
+                if (profileData.surname.isBlank()) throw UserException("Surname cannot be empty")
+                val fiscalCodeRegex = Regex("^[A-Z]{6}[0-9]{2}[A-Z][0-9]{2}[A-Z][0-9]{3}[A-Z]$")
+                if (!fiscalCodeRegex.matches(profileData.fiscalCode)) throw UserException("Invalid fiscal code format")
+
+                usersCollection.updateOne(
+                    UserDocument::_id eq ObjectId(userId),
+                    combine(
+                        setValue(UserDocument::name, profileData.name),
+                        setValue(UserDocument::surname, profileData.surname),
+                        setValue(UserDocument::email, profileData.email),
+                        setValue(UserDocument::fiscalCode, encryptFiscalCode(profileData.fiscalCode, permitNowConfiguration.aesKey))
+                    )
                 )
-            )
+            } else {
+                // TODO(auth-spid): enforce verified field via SPID assertion, not client input
+                if (profileData.name != user.name ||
+                    profileData.surname != user.surname ||
+                    profileData.fiscalCode != decryptFiscalCode(user.fiscalCode)
+                ) throw UserException("Field cannot be modified after SPID verification")
+
+                usersCollection.updateOne(
+                    UserDocument::_id eq ObjectId(userId),
+                    setValue(UserDocument::email, profileData.email)
+                )
+            }
         }catch (e: Exception){
             e.printStackTrace()
             throw UserException(e.message.toString())
