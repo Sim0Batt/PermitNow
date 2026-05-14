@@ -106,7 +106,7 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
                     setValue(UserDocument::name, profileData.name),
                     setValue(UserDocument::surname, profileData.surname),
                     setValue(UserDocument::email, profileData.email),
-                    setValue(UserDocument::fiscalCode, profileData.fiscalCode)
+                    setValue(UserDocument::fiscalCode, encryptFiscalCode(profileData.fiscalCode, permitNowConfiguration.aesKey))
                 )
             )
         }catch (e: Exception){
