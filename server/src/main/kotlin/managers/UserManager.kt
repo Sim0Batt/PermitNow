@@ -83,7 +83,7 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
 
             usersCollection.updateOne(
                 UserDocument::_id eq ObjectId(userId),
-                setValue(UserDocument::password, newPassword)
+                setValue(UserDocument::password, hashPassword(newPassword))
             )
         }catch (e: Exception){
             e.printStackTrace()
