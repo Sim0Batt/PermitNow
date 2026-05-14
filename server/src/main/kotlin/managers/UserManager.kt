@@ -32,9 +32,8 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
             if(usersCollection.countDocuments(UserDocument::email eq registerJson.email) > 0) {
                 throw UserException("User already exists with this email")
             }
-            if(usersCollection.countDocuments(UserDocument::fiscalCode eq decryptFiscalCode(registerJson.fiscalCode)) > 0) {
-                throw UserException("User already exists with this fiscal code")
-            }
+            // TODO(constraints): fiscalCode duplicate check requires a dedicated
+            // searchable hash field — cannot compare AES-GCM ciphertexts directly
 
             val user = UserDocument(
                 name = registerJson.name,
