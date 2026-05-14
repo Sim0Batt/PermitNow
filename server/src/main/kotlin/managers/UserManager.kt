@@ -79,7 +79,7 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
             val user = usersCollection.findOne(UserDocument::_id eq ObjectId(userId))
                 ?: throw UserException("User not found")
 
-            if (verifyPassword(currentPassword, user.password)) throw UserException("Current password is incorrect")
+            if (!verifyPassword(currentPassword, user.password)) throw UserException("Current password is incorrect")
 
             usersCollection.updateOne(
                 UserDocument::_id eq ObjectId(userId),
