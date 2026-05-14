@@ -32,9 +32,8 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
             if(usersCollection.countDocuments(UserDocument::email eq registerJson.email) > 0) {
                 throw UserException("User already exists with this email")
             }
-            if(usersCollection.countDocuments(UserDocument::fiscalCode eq decryptFiscalCode(registerJson.fiscalCode)) > 0) {
-                throw UserException("User already exists with this fiscal code")
-            }
+            // TODO(constraints): fiscalCode duplicate check requires a dedicated
+            // searchable hash field — cannot compare AES-GCM ciphertexts directly
 
             val user = UserDocument(
                 name = registerJson.name,
@@ -80,11 +79,11 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
             val user = usersCollection.findOne(UserDocument::_id eq ObjectId(userId))
                 ?: throw UserException("User not found")
 
-            if (verifyPassword(currentPassword, user.password)) throw UserException("Current password is incorrect")
+            if (!verifyPassword(currentPassword, user.password)) throw UserException("Current password is incorrect")
 
             usersCollection.updateOne(
                 UserDocument::_id eq ObjectId(userId),
-                setValue(UserDocument::password, newPassword)
+                setValue(UserDocument::password, hashPassword(newPassword))
             )
         }catch (e: Exception){
             e.printStackTrace()
@@ -107,7 +106,7 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
                     setValue(UserDocument::name, profileData.name),
                     setValue(UserDocument::surname, profileData.surname),
                     setValue(UserDocument::email, profileData.email),
-                    setValue(UserDocument::fiscalCode, profileData.fiscalCode)
+                    setValue(UserDocument::fiscalCode, encryptFiscalCode(profileData.fiscalCode, permitNowConfiguration.aesKey))
                 )
             )
         }catch (e: Exception){
