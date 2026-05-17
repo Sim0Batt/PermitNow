@@ -11,6 +11,7 @@ import server.models.input.ProfileUpdateJson
 import server.models.input.LoginJson
 import server.models.input.RegisterJson
 import server.models.output.LoginResponseJson
+import server.models.output.UserListItemJson
 import configuration.PermitNowConfiguration
 import exceptions.EncryptionException
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
@@ -59,8 +60,9 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
             if (!isValidLogin(loginJson)) throw UserException("Invalid login data")
 
             println("Login attempt: ${loginJson.email} ${loginJson.password}")
-            val user = usersCollection.findOne(UserDocument::email eq loginJson.email)
-                ?: throw UserException("User not found")
+            val user = usersCollection.findOne(
+                and(UserDocument::email eq loginJson.email, UserDocument::deleted eq false)
+            ) ?: throw UserException("User not found")
 
             if (!verifyPassword(loginJson.password, user.password)) throw UserException("Wrong password")
 
@@ -78,8 +80,9 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
             if (newPassword.length < 8) throw UserException("New password must be at least 8 characters")
             if (newPassword == currentPassword) throw UserException("New password must differ from current password")
 
-            val user = usersCollection.findOne(UserDocument::_id eq ObjectId(userId))
-                ?: throw UserException("User not found")
+            val user = usersCollection.findOne(
+                and(UserDocument::_id eq ObjectId(userId), UserDocument::deleted eq false)
+            ) ?: throw UserException("User not found")
 
             if (!verifyPassword(currentPassword, user.password)) throw UserException("Current password is incorrect")
 
@@ -95,8 +98,9 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
 
     suspend fun updateProfile(userId: String, profileData: ProfileUpdateJson) {
         try{
-            val user = usersCollection.findOne(UserDocument::_id eq ObjectId(userId))
-                ?: throw UserException("User not found")
+            val user = usersCollection.findOne(
+                and(UserDocument::_id eq ObjectId(userId), UserDocument::deleted eq false)
+            ) ?: throw UserException("User not found")
 
             if (profileData.email.isBlank()) throw UserException("Email cannot be empty")
             val emailRegex = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
@@ -137,6 +141,58 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
 
 
 
+
+
+    suspend fun deleteUser(userId: String) {
+        try {
+            val user = usersCollection.findOne(UserDocument::_id eq ObjectId(userId))
+                ?: throw UserException("User not found")
+            if (user.deleted) throw UserException("User already deleted")
+
+            usersCollection.updateOne(
+                UserDocument::_id eq ObjectId(userId),
+                setValue(UserDocument::deleted, true)
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw UserException(e.message.toString())
+        }
+    }
+
+    suspend fun verifyUser(userId: String) {
+        try {
+            val user = usersCollection.findOne(UserDocument::_id eq ObjectId(userId))
+                ?: throw UserException("User not found")
+            if (user.deleted) throw UserException("Cannot verify a deleted user")
+
+            usersCollection.updateOne(
+                UserDocument::_id eq ObjectId(userId),
+                setValue(UserDocument::verified, !user.verified)
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw UserException(e.message.toString())
+        }
+    }
+
+    suspend fun listUsers(): List<UserListItemJson> {
+        try {
+            return usersCollection.find().toList().map {
+                UserListItemJson(
+                    id = it._id.toHexString(),
+                    name = it.name,
+                    surname = it.surname,
+                    email = it.email,
+                    role = it.role,
+                    verified = it.verified,
+                    deleted = it.deleted
+                )
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw UserException(e.message.toString())
+        }
+    }
 
 
     // UTILS FUNCTIONS

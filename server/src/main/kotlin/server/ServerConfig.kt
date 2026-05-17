@@ -122,6 +122,49 @@ fun Application.module() {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
             }
         }
+        delete("/user/{userId}") {
+            // TODO(auth): require admin role before allowing deletion
+            val userId = call.parameters["userId"]
+            if (userId == null) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing userId parameter"))
+                return@delete
+            }
+            try {
+                userManager.deleteUser(userId)
+                call.respond(HttpStatusCode.OK, mapOf("message" to "User deleted successfully"))
+            } catch (e: UserException) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
+        post("/user/{userId}/verify") {
+            // TODO(auth): require admin role before allowing verification toggle
+            val userId = call.parameters["userId"]
+            if (userId == null) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing userId parameter"))
+                return@post
+            }
+            try {
+                userManager.verifyUser(userId)
+                call.respond(HttpStatusCode.OK, mapOf("message" to "User verification toggled successfully"))
+            } catch (e: UserException) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
+        get("/user/list") {
+            // TODO(auth): require admin role
+            // TODO(scope): paginate when the list grows
+            try {
+                call.respond(HttpStatusCode.OK, userManager.listUsers())
+            } catch (e: UserException) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
     }
 }
 
