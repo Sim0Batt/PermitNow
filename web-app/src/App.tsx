@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
 import DashboardHomePage from './dashboard/DashboardHomePage';
 import { UserManagementPage } from './dashboard/pages/user/UserManagementPage';
+import { UserInfoPage } from './dashboard/pages/user/UserInfoPage';
 
 const router = createBrowserRouter([
   {
@@ -12,21 +13,14 @@ const router = createBrowserRouter([
     path: '/dashboard',
     element: <DashboardHomePage />,
   },
-  
-    {
+  {
     path: '/dashboard/user',
     element: <UserManagementPage />,
   },
-  /*
   {
     path: '/dashboard/user/:id',
     element: <UserInfoPage />,
   },
-  {
-    path: '/dashboard/user/new',
-    element: <NewUserPage />,
-  },
-  */
 ]);
 
 function App() {
