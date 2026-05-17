@@ -23,6 +23,16 @@ export interface User {
   verified: boolean;
 }
 
+export interface UserListItem {
+  id: string;
+  name: string;
+  surname: string;
+  email: string;
+  role: string;
+  verified: boolean;
+  deleted: boolean;
+}
+
 export interface Licence {
   licenseNumber: string;
   releasedBy: string;
