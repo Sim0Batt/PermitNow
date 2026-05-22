@@ -59,7 +59,6 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
         try{
             if (!isValidLogin(loginJson)) throw UserException("Invalid login data")
 
-            println("Login attempt: ${loginJson.email} ${loginJson.password}")
             val user = usersCollection.findOne(
                 and(UserDocument::email eq loginJson.email, UserDocument::deleted eq false)
             ) ?: throw UserException("User not found")
@@ -238,8 +237,10 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
     private fun verifyPassword(password: String, dbPassword: String): Boolean {
         val parts = dbPassword.split("$").filter { it.isNotEmpty() }
 
-        val storedSalt = Base64.getDecoder().decode(parts[3])
-        val expectedHash = Base64.getDecoder().decode(parts[4])
+        if (parts.size != 5) return false
+
+        val storedSalt = try { Base64.getDecoder().decode(parts[3]) } catch (e: Exception) { return false }
+        val expectedHash = try { Base64.getDecoder().decode(parts[4]) } catch (e: Exception) { return false }
 
         val verifyParams = Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)
             .withVersion(Argon2Parameters.ARGON2_VERSION_13)
@@ -254,7 +255,7 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
         val hash = ByteArray(32)
         gen.generateBytes(password.toCharArray(), hash)
 
-        return hash.contentEquals(expectedHash)
+        return java.security.MessageDigest.isEqual(hash, expectedHash)
     }
 
     fun decryptFiscalCode(encryptedFiscalCode: String): String {
