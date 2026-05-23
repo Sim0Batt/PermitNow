@@ -1,10 +1,14 @@
 import type { LoginJson, RegisterJson } from '../types/models';
 import { apiClient } from './client';
 
-// TODO: replace unknown with the actual server response type
 export const authApi = {
-  async login(credentials: LoginJson): Promise<unknown> {
-    const response = await apiClient.post('/login', credentials);
+  async login(credentials: LoginJson): Promise<string> {
+    const response = await apiClient.post<string>('/login', credentials);
+    return response.data;
+  },
+
+  async adminLogin(credentials: LoginJson): Promise<string> {
+    const response = await apiClient.post<string>('/login/admin', credentials);
     return response.data;
   },
 
