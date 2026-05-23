@@ -73,6 +73,17 @@ fun Application.module() {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
             }
         }
+        post ("/login/admin") {
+            val loginJson = call.receive<LoginJson>()
+            try {
+                val response = userManager.adminLogin(loginJson)
+                call.respond(HttpStatusCode.OK, response)
+            } catch (e: UserException) {
+                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to e.customMessage))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
         post ("/register") {
             val registerJson = call.receive<RegisterJson>()
             try {

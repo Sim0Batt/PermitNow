@@ -72,6 +72,25 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
         }
     }
 
+    suspend fun adminLogin(loginJson: LoginJson): String {
+        try {
+            if (!isValidLogin(loginJson)) throw UserException("Invalid login data")
+
+            val user = usersCollection.findOne(
+                and(UserDocument::email eq loginJson.email, UserDocument::deleted eq false)
+            ) ?: throw UserException("User not found")
+
+            if (!verifyPassword(loginJson.password, user.password)) throw UserException("Wrong password")
+
+            if (user.role != "admin") throw UserException("Access denied: user is not an admin")
+
+            return user._id.toHexString()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw UserException(e.message.toString())
+        }
+    }
+
     suspend fun changePassword(userId: String, currentPassword: String, newPassword: String) {
         try{
             if (newPassword.isBlank()) throw UserException("New password cannot be empty")
