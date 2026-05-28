@@ -62,9 +62,8 @@ fun Application.module() {
 
     // Managers
     val userManager = UserManager(connection, permitNowConfiguration)
-    val licenseManager = LicenseManager(connection, permitNowConfiguration)
-    val licenseRecognition = LicenseRecognition(permitNowConfiguration)
-
+    val licenseRecognition = LicenseRecognition(permitNowConfiguration, userManager)
+    val licenseManager = LicenseManager(connection, permitNowConfiguration, licenseRecognition)
 
     // Routes
     routing {
@@ -226,8 +225,7 @@ fun Application.module() {
             }
 
             try {
-                val fishingDocument = licenseRecognition.readFishingLicense(userId)
-                licenseManager.addLicense(fishingDocument, userId)
+                licenseManager.addLicense(userId)
                 call.respond(HttpStatusCode.OK, "License added successfully")
             }catch (e: Exception){
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))

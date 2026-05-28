@@ -8,26 +8,31 @@ import ai.koog.prompt.message.ContentPart
 import ai.koog.prompt.params.LLMParams
 import configuration.PermitNowConfiguration
 import database.documents.FishingLicenseDocument
+import database.documents.UserDocument
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonArray
+import managers.UserManager
 import utils.FISHING_SYSTEM_PROMPT
+import utils.UtilsFunctions
 import utils.imagePath
 import utils.models.FishingStructuredOutput
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.util.logging.Logger
 import javax.imageio.ImageIO
 
-class LicenseRecognition(val permitNowConfiguration: PermitNowConfiguration) {
+class LicenseRecognition(val permitNowConfiguration: PermitNowConfiguration, val userManager: UserManager) {
 
     val executor = simpleGoogleAIExecutor(permitNowConfiguration.googleApiKey)
+    val logger = Logger.getLogger(this::class.java.name)
 
-    suspend fun readFishingLicense(userId: String): FishingLicenseDocument {
+    suspend fun readFishingLicense(userDocument: UserDocument): FishingLicenseDocument {
 
-        val imageFile = File(imagePath + "${userId}_FISHING.jpg")
+        val imageFile = File(imagePath + "${userDocument._id}_FISHING.jpg")
 
         val compressedBytes = imageCompression(imageFile.readBytes())
 
@@ -37,7 +42,6 @@ class LicenseRecognition(val permitNowConfiguration: PermitNowConfiguration) {
                 temperature = 0.0,
                 schema = LLMParams.Schema.JSON.Basic(
                     name = "FishingOutput",
-                    // Costruiamo lo Schema Formale
                     schema = JsonObject(mapOf(
                         "type" to JsonPrimitive("object"),
                         "properties" to JsonObject(mapOf(
@@ -79,8 +83,13 @@ class LicenseRecognition(val permitNowConfiguration: PermitNowConfiguration) {
 
             val finalJson = Json.decodeFromString<FishingStructuredOutput>(responseText.removePrefix("```json").removeSuffix("```").trim())
 
+            if(userManager.decryptFiscalCode(userDocument.fiscalCode) != finalJson.fiscalCode) {
+                logger.info("Fiscal code does not match with user data")
+                throw IllegalStateException("Fiscal code does not match with user data")
+            }
+
             FishingLicenseDocument(
-                qrCodeToken = "",
+                qrCodeToken = UtilsFunctions.generateQRCodeToken(),
                 status = "PENDING",
                 licenseNumber = finalJson.licenseNumber,
                 releasedBy = finalJson.releasedBy,
@@ -91,7 +100,7 @@ class LicenseRecognition(val permitNowConfiguration: PermitNowConfiguration) {
             )
         } catch (e: Exception) {
             e.printStackTrace()
-            FishingLicenseDocument()
+            throw IllegalStateException("Failed to read fishing license")
         }
     }
 
@@ -104,7 +113,6 @@ class LicenseRecognition(val permitNowConfiguration: PermitNowConfiguration) {
             val ratio = maxWidth.toDouble() / original.width
             val newHeight = (original.height * ratio).toInt()
 
-            // 4. Ridisegniamo l'immagine rimpicciolita
             val resized = BufferedImage(maxWidth, newHeight, BufferedImage.TYPE_INT_RGB)
             val g = resized.createGraphics()
             g.drawImage(original, 0, 0, maxWidth, newHeight, null)
