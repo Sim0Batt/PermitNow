@@ -5,6 +5,7 @@ import { DashboardLoginPage } from './dashboard/pages/DashboardLoginPage';
 import { UserManagementPage } from './dashboard/pages/user/UserManagementPage';
 import { UserInfoPage } from './dashboard/pages/user/UserInfoPage';
 import { AuthProvider } from './context/AuthContext';
+import { RequireAuth } from './components/RequireAuth';
 
 const router = createBrowserRouter([
   {
@@ -16,16 +17,21 @@ const router = createBrowserRouter([
     element: <DashboardLoginPage />,
   },
   {
-    path: '/dashboard',
-    element: <DashboardHomePage />,
-  },
-  {
-    path: '/dashboard/user',
-    element: <UserManagementPage />,
-  },
-  {
-    path: '/dashboard/user/:id',
-    element: <UserInfoPage />,
+    element: <RequireAuth />,
+    children: [
+      {
+        path: '/dashboard',
+        element: <DashboardHomePage />,
+      },
+      {
+        path: '/dashboard/user',
+        element: <UserManagementPage />,
+      },
+      {
+        path: '/dashboard/user/:id',
+        element: <UserInfoPage />,
+      },
+    ],
   },
 ]);
 
