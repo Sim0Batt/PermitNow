@@ -16,4 +16,8 @@ export const authApi = {
     const response = await apiClient.post('/register', userData);
     return response.data;
   },
+
+  async logout(): Promise<void> {
+    await apiClient.post('/logout');
+  },
 };
