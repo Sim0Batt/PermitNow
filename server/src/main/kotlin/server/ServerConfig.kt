@@ -15,6 +15,7 @@ import io.ktor.server.routing.*
 import kotlinx.serialization.json.Json
 import exceptions.UserException
 import managers.UserManager
+import server.models.input.AdminCreateUserJson
 import server.models.input.ChangePasswordJson
 import server.models.input.ProfileUpdateJson
 import server.models.input.LoginJson
@@ -161,6 +162,21 @@ fun Application.module() {
                 call.respond(HttpStatusCode.OK, mapOf("message" to "User verification toggled successfully"))
             } catch (e: UserException) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
+        post("/admin/users") {
+            val json = call.receive<AdminCreateUserJson>()
+            try {
+                val userId = userManager.createUser(json)
+                call.respond(HttpStatusCode.Created, mapOf("id" to userId))
+            } catch (e: UserException) {
+                if (e.customMessage.startsWith("DUPLICATE:")) {
+                    call.respond(HttpStatusCode.Conflict, mapOf("error" to e.customMessage.removePrefix("DUPLICATE:")))
+                } else {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
+                }
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
             }

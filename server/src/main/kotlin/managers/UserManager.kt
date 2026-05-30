@@ -7,6 +7,7 @@ import org.bson.types.ObjectId
 import org.litote.kmongo.combine
 import org.litote.kmongo.eq
 import org.litote.kmongo.setValue
+import server.models.input.AdminCreateUserJson
 import server.models.input.ProfileUpdateJson
 import server.models.input.LoginJson
 import server.models.input.RegisterJson
@@ -187,6 +188,40 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
                 UserDocument::_id eq ObjectId(userId),
                 setValue(UserDocument::verified, !user.verified)
             )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw UserException(e.message.toString())
+        }
+    }
+
+    suspend fun createUser(json: AdminCreateUserJson): String {
+        try {
+            if (json.name.isBlank()) throw UserException("Name cannot be blank")
+            if (json.surname.isBlank()) throw UserException("Surname cannot be blank")
+            if (json.email.isBlank()) throw UserException("Email cannot be blank")
+            if (json.password.isBlank()) throw UserException("Password cannot be blank")
+            if (json.fiscalCode.isBlank()) throw UserException("Fiscal code cannot be blank")
+
+            if (usersCollection.findOne(UserDocument::email eq json.email) != null) {
+                throw UserException("DUPLICATE:Email già in uso")
+            }
+            // TODO(constraints): fiscalCode duplicate check requires a dedicated
+            // searchable hash field — cannot compare AES-GCM ciphertexts directly
+
+            val user = UserDocument(
+                name = json.name,
+                surname = json.surname,
+                email = json.email,
+                password = hashPassword(json.password),
+                fiscalCode = encryptFiscalCode(json.fiscalCode, permitNowConfiguration.aesKey),
+                role = "user",
+                verified = false
+            )
+
+            usersCollection.insertOne(user)
+            return user._id.toHexString()
+        } catch (e: UserException) {
+            throw e
         } catch (e: Exception) {
             e.printStackTrace()
             throw UserException(e.message.toString())
