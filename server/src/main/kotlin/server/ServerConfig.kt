@@ -251,6 +251,22 @@ fun Application.module() {
             }
 
         }
+        delete("/license/fishing/{userId}") {
+            // TODO(auth): require authenticated user matching userId
+            val userId = call.parameters["userId"]
+            if (userId == null) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing userId parameter"))
+                return@delete
+            }
+            try {
+                licenseManager.deleteLicense(userId)
+                call.respond(HttpStatusCode.OK, mapOf("message" to "License deleted successfully"))
+            } catch (e: UserException) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
     }
 }
 
