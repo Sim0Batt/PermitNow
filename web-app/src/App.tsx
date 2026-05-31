@@ -1,5 +1,10 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
+import { WalletPage } from './pages/WalletPage';
+import { LicencePage } from './pages/LicencePage';
+import { PermitsPage } from './pages/PermitsPage';
+import { LoginPlaceholderPage } from './pages/LoginPage';
+import { RegisterPlaceholderPage } from './pages/RegisterPage';
 import DashboardHomePage from './dashboard/DashboardHomePage';
 import { DashboardLoginPage } from './dashboard/pages/DashboardLoginPage';
 import { UserManagementPage } from './dashboard/pages/user/UserManagementPage';
@@ -13,12 +18,38 @@ const router = createBrowserRouter([
     path: '/',
     element: <HomePage />,
   },
+  // TODO(auth): replace with real login/register pages (issues #43, #44)
+  {
+    path: '/login',
+    element: <LoginPlaceholderPage />,
+  },
+  {
+    path: '/register',
+    element: <RegisterPlaceholderPage />,
+  },
+  {
+    element: <RequireAuth role="user" />,
+    children: [
+      {
+        path: '/wallet',
+        element: <WalletPage />,
+      },
+      {
+        path: '/licence',
+        element: <LicencePage />,
+      },
+      {
+        path: '/permits',
+        element: <PermitsPage />,
+      },
+    ],
+  },
   {
     path: '/dashboard/login',
     element: <DashboardLoginPage />,
   },
   {
-    element: <RequireAuth />,
+    element: <RequireAuth role="admin" />,
     children: [
       {
         path: '/dashboard',
