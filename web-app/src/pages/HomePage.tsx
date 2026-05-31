@@ -1,12 +1,14 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NavBar } from '../components/NavBar';
+import { useAuth } from '../context/AuthContext';
 
 const BRAND = '#1D9E75';
 const BRAND_DARK = '#178a64';
 
 export function HomePage() {
   const navigate = useNavigate();
+  const { role, verified } = useAuth();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [activeNewsIndex, setActiveNewsIndex] = useState(0);
 
@@ -23,6 +25,30 @@ export function HomePage() {
       ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  const mode: 'guest' | 'unverified' | 'verified' =
+    role === 'user' && verified
+      ? 'verified'
+      : role === 'user'
+        ? 'unverified'
+        : 'guest';
+
+  const stepStartIndex =
+    mode === 'verified' ? 2 : mode === 'unverified' ? 1 : 0;
+  const visibleSteps = STEPS.slice(stepStartIndex);
+  const currentStepIndex = mode === 'guest' ? -1 : 0;
+  const stepsGridCols =
+    visibleSteps.length === 2
+      ? 'lg:grid-cols-2'
+      : visibleSteps.length === 3
+        ? 'lg:grid-cols-3'
+        : 'lg:grid-cols-4';
+  const stepsSubtitle =
+    mode === 'verified'
+      ? 'Due passaggi per gestire licenze e permessi.'
+      : mode === 'unverified'
+        ? 'Tre passaggi per completare la configurazione.'
+        : 'Quattro passaggi per accedere a tutti i tuoi documenti.';
+
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
       <NavBar />
@@ -31,76 +57,133 @@ export function HomePage() {
       <section className="bg-gradient-to-b from-white to-gray-50">
         <div className="mx-auto max-w-6xl px-4 py-20 md:py-28">
           <div className="max-w-3xl">
-            <span
-              className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
-              style={{ backgroundColor: `${BRAND}1A`, color: BRAND_DARK }}
-            >
-              Servizio pubblico digitale
-            </span>
-            <h1 className="mt-5 text-4xl font-bold tracking-tight text-gray-900 md:text-5xl">
-              Le tue licenze e i tuoi permessi,
-              <span style={{ color: BRAND }}> in un unico posto</span>.
-            </h1>
-            <p className="mt-6 max-w-2xl text-lg text-gray-600">
-              Gestisci licenze di pesca, caccia e attività boschive con
-              autenticazione SPID. Sicuro, semplice, sempre con te.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() => navigate('/login')}
-                className="rounded-lg bg-[#1D9E75] px-6 py-3 text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#178a64]"
-              >
-                Accedi
-              </button>
-              <button
-                type="button"
-                onClick={() => scrollTo('servizi')}
-                className="rounded-lg border border-gray-300 bg-white px-6 py-3 text-base font-semibold text-gray-800 transition-colors hover:bg-gray-50"
-              >
-                Scopri i servizi
-              </button>
+            {mode === 'guest' ? (
+              <>
+                <span
+                  className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
+                  style={{ backgroundColor: `${BRAND}1A`, color: BRAND_DARK }}
+                >
+                  Servizio pubblico digitale
+                </span>
+                <h1 className="mt-5 text-4xl font-bold tracking-tight text-gray-900 md:text-5xl">
+                  Le tue licenze e i tuoi permessi,
+                  <span style={{ color: BRAND }}> in un unico posto</span>.
+                </h1>
+                <p className="mt-6 max-w-2xl text-lg text-gray-600">
+                  Gestisci licenze di pesca, caccia e attività boschive con
+                  autenticazione SPID. Sicuro, semplice, sempre con te.
+                </p>
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/login')}
+                    className="rounded-lg bg-[#1D9E75] px-6 py-3 text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#178a64]"
+                  >
+                    Accedi
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => scrollTo('servizi')}
+                    className="rounded-lg border border-gray-300 bg-white px-6 py-3 text-base font-semibold text-gray-800 transition-colors hover:bg-gray-50"
+                  >
+                    Scopri i servizi
+                  </button>
+                </div>
+              </>
+            ) : mode === 'unverified' ? (
+              <>
+                <h1 className="text-4xl font-bold tracking-tight text-gray-900 md:text-5xl">
+                  Bentornato su PermitNow
+                </h1>
+                <p className="mt-6 max-w-2xl text-lg text-gray-600">
+                  Verifica la tua identità con SPID per sbloccare licenze e
+                  permessi.
+                </p>
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/login')}
+                    className="rounded-lg bg-[#1D9E75] px-6 py-3 text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#178a64]"
+                  >
+                    Verifica con SPID
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/wallet')}
+                    className="rounded-lg border border-gray-300 bg-white px-6 py-3 text-base font-semibold text-gray-800 transition-colors hover:bg-gray-50"
+                  >
+                    Vai al wallet
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h1 className="text-4xl font-bold tracking-tight text-gray-900 md:text-5xl">
+                  Bentornato su PermitNow
+                </h1>
+                <p className="mt-6 max-w-2xl text-lg text-gray-600">
+                  Gestisci le tue licenze e permessi dal wallet.
+                </p>
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/wallet')}
+                    className="rounded-lg bg-[#1D9E75] px-6 py-3 text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#178a64]"
+                  >
+                    Vai al wallet
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/permits')}
+                    className="rounded-lg border border-gray-300 bg-white px-6 py-3 text-base font-semibold text-gray-800 transition-colors hover:bg-gray-50"
+                  >
+                    Richiedi permesso
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Services — hidden for logged-in users */}
+      {role === null && (
+        <section id="servizi" className="bg-white">
+          <div className="mx-auto max-w-6xl px-4 py-20">
+            <div className="max-w-2xl">
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900">
+                Servizi
+              </h2>
+              <p className="mt-3 text-gray-600">
+                Tutto quello che ti serve per gestire licenze e permessi in
+                un'unica piattaforma.
+              </p>
+            </div>
+
+            <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {SERVICES.map((s) => (
+                <article
+                  key={s.title}
+                  className="rounded-xl border border-gray-200 bg-white p-6 transition-shadow hover:shadow-md"
+                >
+                  <div
+                    className="flex h-12 w-12 items-center justify-center rounded-lg"
+                    style={{ backgroundColor: `${BRAND}1A`, color: BRAND }}
+                  >
+                    {s.icon}
+                  </div>
+                  <h3 className="mt-5 text-lg font-semibold text-gray-900">
+                    {s.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-gray-600">
+                    {s.description}
+                  </p>
+                </article>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Services */}
-      <section id="servizi" className="bg-white">
-        <div className="mx-auto max-w-6xl px-4 py-20">
-          <div className="max-w-2xl">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900">
-              Servizi
-            </h2>
-            <p className="mt-3 text-gray-600">
-              Tutto quello che ti serve per gestire licenze e permessi in
-              un'unica piattaforma.
-            </p>
-          </div>
-
-          <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {SERVICES.map((s) => (
-              <article
-                key={s.title}
-                className="rounded-xl border border-gray-200 bg-white p-6 transition-shadow hover:shadow-md"
-              >
-                <div
-                  className="flex h-12 w-12 items-center justify-center rounded-lg"
-                  style={{ backgroundColor: `${BRAND}1A`, color: BRAND }}
-                >
-                  {s.icon}
-                </div>
-                <h3 className="mt-5 text-lg font-semibold text-gray-900">
-                  {s.title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-gray-600">
-                  {s.description}
-                </p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* News */}
       <section id="notizie" className="border-t border-gray-100 bg-white">
@@ -164,31 +247,45 @@ export function HomePage() {
             <h2 className="text-3xl font-bold tracking-tight text-gray-900">
               Come funziona
             </h2>
-            <p className="mt-3 text-gray-600">
-              Quattro passaggi per accedere a tutti i tuoi documenti.
-            </p>
+            <p className="mt-3 text-gray-600">{stepsSubtitle}</p>
           </div>
 
-          <ol className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {STEPS.map((step, idx) => (
-              <li
-                key={step.title}
-                className="rounded-xl border border-gray-200 bg-white p-6"
-              >
-                <div
-                  className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white"
-                  style={{ backgroundColor: BRAND }}
+          <ol
+            className={`mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 ${stepsGridCols}`}
+          >
+            {visibleSteps.map((step, idx) => {
+              const isCurrent = idx === currentStepIndex;
+              const stepNumber = stepStartIndex + idx + 1;
+              return (
+                <li
+                  key={step.title}
+                  className={
+                    isCurrent
+                      ? 'rounded-xl border-2 bg-white p-6'
+                      : 'rounded-xl border border-gray-200 bg-white p-6'
+                  }
+                  style={isCurrent ? { borderColor: BRAND } : undefined}
+                  aria-current={isCurrent ? 'step' : undefined}
                 >
-                  {idx + 1}
-                </div>
-                <h3 className="mt-5 text-lg font-semibold text-gray-900">
-                  {step.title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-gray-600">
-                  {step.description}
-                </p>
-              </li>
-            ))}
+                  <div
+                    className={
+                      isCurrent
+                        ? 'flex h-12 w-12 items-center justify-center rounded-full text-base font-bold text-white'
+                        : 'flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white'
+                    }
+                    style={{ backgroundColor: BRAND }}
+                  >
+                    {stepNumber}
+                  </div>
+                  <h3 className="mt-5 text-lg font-semibold text-gray-900">
+                    {step.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-gray-600">
+                    {step.description}
+                  </p>
+                </li>
+              );
+            })}
           </ol>
         </div>
       </section>
@@ -232,28 +329,30 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* CTA band */}
-      <section style={{ backgroundColor: BRAND }}>
-        <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-4 py-14 md:flex-row md:items-center">
-          <div>
-            <h2 className="text-2xl font-bold text-white md:text-3xl">
-              Pronto a iniziare?
-            </h2>
-            <p className="mt-2 text-white/90">
-              Registrati gratuitamente e inizia a gestire licenze e permessi dal
-              tuo dispositivo.
-            </p>
+      {/* CTA band — hidden for logged-in users */}
+      {role === null && (
+        <section style={{ backgroundColor: BRAND }}>
+          <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-4 py-14 md:flex-row md:items-center">
+            <div>
+              <h2 className="text-2xl font-bold text-white md:text-3xl">
+                Pronto a iniziare?
+              </h2>
+              <p className="mt-2 text-white/90">
+                Registrati gratuitamente e inizia a gestire licenze e permessi
+                dal tuo dispositivo.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/register')}
+              className="rounded-lg bg-white px-6 py-3 text-base font-semibold shadow-sm transition-colors hover:bg-gray-100"
+              style={{ color: BRAND_DARK }}
+            >
+              Inizia ora — Registrati
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => navigate('/register')}
-            className="rounded-lg bg-white px-6 py-3 text-base font-semibold shadow-sm transition-colors hover:bg-gray-100"
-            style={{ color: BRAND_DARK }}
-          >
-            Inizia ora — Registrati
-          </button>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Footer */}
       <footer className="mt-auto border-t border-gray-200 bg-white">
