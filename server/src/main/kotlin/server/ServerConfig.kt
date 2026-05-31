@@ -19,6 +19,7 @@ import java.io.File
 import exceptions.UserException
 import managers.LicenseManager
 import managers.UserManager
+import server.models.input.AdminCreateUserJson
 import script.LicenseRecognition
 import server.models.input.ChangePasswordJson
 import server.models.input.ProfileUpdateJson
@@ -171,6 +172,21 @@ fun Application.module() {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
             }
         }
+        post("/admin/users") {
+            val json = call.receive<AdminCreateUserJson>()
+            try {
+                val userId = userManager.createUser(json)
+                call.respond(HttpStatusCode.Created, mapOf("id" to userId))
+            } catch (e: UserException) {
+                if (e.customMessage.startsWith("DUPLICATE:")) {
+                    call.respond(HttpStatusCode.Conflict, mapOf("error" to e.customMessage.removePrefix("DUPLICATE:")))
+                } else {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
+                }
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
         get("/user/list") {
             // TODO(auth): require admin role
             // TODO(scope): paginate when the list grows
@@ -182,10 +198,10 @@ fun Application.module() {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
             }
         }
-        
-        
-        
-        
+
+
+
+
         // FISHING LICENSE
         post("/license/fishing"){
             val multipart = call.receiveMultipart()

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
+import { authApi } from '../api/auth';
 
 interface AuthState {
   userId: string | null;
@@ -7,7 +8,7 @@ interface AuthState {
 
 interface AuthContextType extends AuthState {
   login: (userId: string) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const STORAGE_KEY = 'admin_user_id';
@@ -24,7 +25,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUserId(id);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // Best-effort server call; ignore failures since logout is purely client-side
+    try {
+      await authApi.logout();
+    } catch {
+      // Intentionally ignored: clearing local auth state must always succeed
+    }
     localStorage.removeItem(STORAGE_KEY);
     setUserId(null);
   };
