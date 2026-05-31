@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 export const NavBarDashboard = () => {
   const links: Record<string, string> = {
@@ -10,8 +11,14 @@ export const NavBarDashboard = () => {
   };
 
   const navigate = useNavigate();
+  const { isAuthenticated, logout } = useAuth();
   const goToPage = (componentName: string) => {
     navigate(componentName);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/dashboard/login');
   };
 
   return (
@@ -30,14 +37,18 @@ export const NavBarDashboard = () => {
               <button onClick={() => goToPage(links[item])}>{item}</button>
             </li>
           ))}
+          {isAuthenticated && (
+            <li>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white shadow-md transition-all hover:bg-blue-700"
+              >
+                Esci
+              </button>
+            </li>
+          )}
         </ul>
-
-        {/* <button
-          type="button"
-          className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white shadow-md transition-all hover:bg-blue-700"
-        >
-          Nuova richiesta
-        </button> */}
       </nav>
     </header>
   );

@@ -9,6 +9,7 @@ import DashboardHomePage from './dashboard/DashboardHomePage';
 import { DashboardLoginPage } from './dashboard/pages/DashboardLoginPage';
 import { UserManagementPage } from './dashboard/pages/user/UserManagementPage';
 import { UserInfoPage } from './dashboard/pages/user/UserInfoPage';
+import { NewUserPage } from './dashboard/pages/user/NewUserPage';
 import { AuthProvider } from './context/AuthContext';
 import { RequireAuth } from './components/RequireAuth';
 
@@ -53,6 +54,10 @@ const router = createBrowserRouter([
       {
         path: '/dashboard/user',
         element: <UserManagementPage />,
+      },
+      {
+        path: '/dashboard/users/create',
+        element: <NewUserPage />,
       },
       {
         path: '/dashboard/user/:id',

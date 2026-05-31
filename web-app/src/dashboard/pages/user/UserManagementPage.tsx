@@ -10,12 +10,10 @@ export const UserManagementPage = () => {
       <NavBarDashboard />
       <div className="p-10">
         <button
-          onClick={() => {
-            navigate('/dashboard/user/new');
-          }}
+          onClick={() => navigate('/dashboard/users/create')}
           className="bg-blue-600 text-white px-4 py-2 rounded mt-4"
         >
-          Crea Nuovo User
+          Nuovo utente
         </button>
       </div>
       <div className="flex-1 p-10">
