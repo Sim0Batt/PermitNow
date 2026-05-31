@@ -27,25 +27,29 @@ const router = createBrowserRouter([
     path: '/register',
     element: <RegisterPlaceholderPage />,
   },
-  // TODO(auth): wrap with RequireUser once UserAuthContext is ready
   {
-    path: '/wallet',
-    element: <WalletPage />,
-  },
-  {
-    path: '/licence',
-    element: <LicencePage />,
-  },
-  {
-    path: '/permits',
-    element: <PermitsPage />,
+    element: <RequireAuth role="user" />,
+    children: [
+      {
+        path: '/wallet',
+        element: <WalletPage />,
+      },
+      {
+        path: '/licence',
+        element: <LicencePage />,
+      },
+      {
+        path: '/permits',
+        element: <PermitsPage />,
+      },
+    ],
   },
   {
     path: '/dashboard/login',
     element: <DashboardLoginPage />,
   },
   {
-    element: <RequireAuth />,
+    element: <RequireAuth role="admin" />,
     children: [
       {
         path: '/dashboard',

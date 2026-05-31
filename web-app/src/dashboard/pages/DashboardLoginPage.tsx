@@ -10,7 +10,7 @@ export const DashboardLoginPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const { login } = useAuth();
+  const { loginAdmin } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -19,7 +19,7 @@ export const DashboardLoginPage = () => {
     setLoading(true);
     try {
       const userId = await authApi.adminLogin({ email, password });
-      login(userId);
+      loginAdmin(userId);
       navigate('/dashboard');
     } catch (err) {
       const axiosErr = err as AxiosError<{ error?: string }>;

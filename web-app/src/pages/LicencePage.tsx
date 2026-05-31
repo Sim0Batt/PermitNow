@@ -7,7 +7,7 @@ export function LicencePage() {
   return (
     <div className="flex min-h-screen flex-col bg-white text-gray-900">
       <NavBar />
-      <SpidLock pageName="Licenze" isLocked={true}>
+      <SpidLock pageName="Licenze">
         <main className="flex flex-1 flex-col items-center justify-center px-4 py-20 text-center">
           <div
             className="flex h-16 w-16 items-center justify-center rounded-2xl"

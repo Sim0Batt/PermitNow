@@ -1,17 +1,18 @@
 import { useNavigate } from 'react-router-dom';
 import type { ReactNode } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const BRAND = '#1D9E75';
 
 interface SpidLockProps {
   children: ReactNode;
   pageName: string;
-  isLocked: boolean;
 }
 
-// TODO(auth): wrap with real verified check from UserAuthContext
-export function SpidLock({ children, pageName, isLocked }: SpidLockProps) {
+export function SpidLock({ children, pageName }: SpidLockProps) {
   const navigate = useNavigate();
+  const { role, verified } = useAuth();
+  const isLocked = role === 'user' && !verified;
 
   if (!isLocked) {
     return <>{children}</>;
