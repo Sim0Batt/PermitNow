@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { NavBar } from '../components/NavBar';
 
 const BRAND = '#1D9E75';
 const BRAND_DARK = '#178a64';
@@ -24,63 +25,7 @@ export function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
-      {/* NavBar */}
-      <header className="sticky top-0 z-40 w-full border-b border-gray-200 bg-white">
-        <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-lg font-bold text-gray-900"
-          >
-            <LeafIcon className="h-6 w-6" style={{ color: BRAND }} />
-            <span>PermitNow</span>
-          </button>
-
-          <ul className="hidden items-center gap-6 text-sm font-medium text-gray-700 md:flex">
-            <li>
-              <button
-                onClick={() => scrollTo('servizi')}
-                className="transition-colors hover:text-[#1D9E75]"
-              >
-                Servizi
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => scrollTo('come-funziona')}
-                className="transition-colors hover:text-[#1D9E75]"
-              >
-                Come funziona
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => scrollTo('faq')}
-                className="transition-colors hover:text-[#1D9E75]"
-              >
-                FAQ
-              </button>
-            </li>
-          </ul>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => navigate('/login')}
-              className="rounded-lg px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100"
-            >
-              Accedi
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/register')}
-              className="rounded-lg bg-[#1D9E75] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#178a64]"
-            >
-              Registrati
-            </button>
-          </div>
-        </nav>
-      </header>
+      <NavBar />
 
       {/* Hero */}
       <section className="bg-gradient-to-b from-white to-gray-50">
