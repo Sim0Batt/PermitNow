@@ -225,7 +225,10 @@ fun Application.module() {
             }
 
             try {
-                licenseManager.addLicense(userId)
+                val userDocument = userManager.getUserInfo(userId)
+                val imageFile = File(imagePath + "${userDocument._id}_FISHING.jpg")
+                val fishingDocument = licenseRecognition.readFishingLicense(userDocument, imageFile)
+                licenseManager.addLicense(userId, fishingDocument)
                 call.respond(HttpStatusCode.OK, "License added successfully")
             }catch (e: Exception){
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))

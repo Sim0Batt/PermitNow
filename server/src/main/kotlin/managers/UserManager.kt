@@ -217,6 +217,18 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
         }
     }
 
+    suspend fun getUserInfo(userId: String): UserDocument{
+        try{
+            val user = usersCollection.findOne(UserDocument::_id eq ObjectId(userId.toString()))
+                ?: throw UserException("User not found")
+
+            return user
+        }catch (e: Exception){
+            e.printStackTrace()
+            throw UserException(e.message.toString())
+        }
+    }
+
 
     // UTILS FUNCTIONS
     fun hashPassword(password: String): String {

@@ -30,9 +30,7 @@ class LicenseRecognition(val permitNowConfiguration: PermitNowConfiguration, val
     val executor = simpleGoogleAIExecutor(permitNowConfiguration.googleApiKey)
     val logger = Logger.getLogger(this::class.java.name)
 
-    suspend fun readFishingLicense(userDocument: UserDocument): FishingLicenseDocument {
-
-        val imageFile = File(imagePath + "${userDocument._id}_FISHING.jpg")
+    suspend fun readFishingLicense(userDocument: UserDocument, imageFile: File): FishingLicenseDocument {
 
         val compressedBytes = imageCompression(imageFile.readBytes())
 
@@ -68,7 +66,7 @@ class LicenseRecognition(val permitNowConfiguration: PermitNowConfiguration, val
         ) {
             system(FISHING_SYSTEM_PROMPT)
             user {
-                +"Estrai i dati da questa licenza di pesca. Segui lo schema alla lettera."
+                + "Estrai i dati da questa licenza di pesca. Segui lo schema alla lettera."
                 image(ContentPart.Image(content = AttachmentContent.Binary.Bytes(compressedBytes), format = "jpg"))
             }
         }

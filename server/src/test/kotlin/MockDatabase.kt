@@ -63,7 +63,17 @@ object MockDatabase {
             verified = false
         )
 
-        config.userCollection.insertMany(listOf(testUser, testAdmin, testUserNonValid))
+        val licenseUser = UserDocument(
+            name = "Mario",
+            surname = "Rossi",
+            email = "test2@test.com",
+            password = userManager.hashPassword("test"),
+            fiscalCode = userManager.encryptFiscalCode("RSSMRA85D15L378K", PermitNowConfiguration.aesKey),
+            role = "user",
+            verified = true
+        )
+
+        config.userCollection.insertMany(listOf(testUser, testAdmin, testUserNonValid, licenseUser))
 
         // Verifichiamo che ci siano usando la stessa collection
         println("Database created with values: " + config.userCollection.find().toList())
@@ -71,7 +81,11 @@ object MockDatabase {
         return config
     }
 
-    fun closeDatabase() {
+    suspend fun closeDatabase() {
+        if (::testDatabase.isInitialized) {
+            testDatabase.drop()
+        }
+
         if (::runningMongo.isInitialized) {
             runningMongo.close()
         }

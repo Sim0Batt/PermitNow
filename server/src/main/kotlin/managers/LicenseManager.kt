@@ -17,7 +17,7 @@ class LicenseManager(val connection: DatabaseConfig, val permitNowConfiguration:
     val logger = Logger.getLogger(this::class.java.name)
 
 
-    suspend fun addLicense(userId: String) {
+    suspend fun addLicense(userId: String, fishingDocument: FishingLicenseDocument) {
         try{
             logger.info("Starting Fishing License addition process")
 
@@ -36,8 +36,6 @@ class LicenseManager(val connection: DatabaseConfig, val permitNowConfiguration:
                 logger.warning("User is not a user")
                 throw IllegalStateException("User is not a user")
             }
-
-            val fishingDocument = licenseRecognition.readFishingLicense(user)
 
             licenseCollection.insertOne(fishingDocument)
             userCollection.updateOneById(ObjectId(userId), setValue(UserDocument::fishingLicense, fishingDocument))
