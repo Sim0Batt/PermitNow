@@ -32,7 +32,7 @@ class LoginTests {
     }
 
     @AfterAll
-    fun close() {
+    fun close() = runBlocking {
         MockDatabase.closeDatabase()
     }
 

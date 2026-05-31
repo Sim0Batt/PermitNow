@@ -14,7 +14,8 @@ class UserDocument (
     val fiscalCode: String = "",
     val role: String = "user",
     val verified: Boolean = false,
-    val deleted: Boolean = false
+    val deleted: Boolean = false,
+    val fishingLicense: FishingLicenseDocument? = null
 ){
     override fun toString(): String {
         return """
@@ -25,7 +26,8 @@ class UserDocument (
     "email": "$email",
     "role": "$role",
     "verified": $verified,
-    "deleted": $deleted
+    "deleted": $deleted,
+    "fishingLicense": $fishingLicense
 }
         """.trimIndent()
     }

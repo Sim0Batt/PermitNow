@@ -20,6 +20,7 @@ import org.bouncycastle.crypto.params.Argon2Parameters
 import org.litote.kmongo.and
 import java.security.SecureRandom
 import java.util.Base64
+import java.util.logging.Logger
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
@@ -27,16 +28,20 @@ import javax.crypto.spec.SecretKeySpec
 class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: PermitNowConfiguration){
 
     val usersCollection = connection.userCollection
+    val logger = Logger.getLogger(this::class.java.name)
 
     suspend fun register(registerJson: RegisterJson): String {
         try {
             if(!isValidRegistration(registerJson)) throw UserException("Invalid registration data")
             if(usersCollection.countDocuments(UserDocument::email eq registerJson.email) > 0) {
+                logger.warning("User already exists with this email")
                 throw UserException("User already exists with this email")
             }
+
             // TODO(constraints): fiscalCode duplicate check requires a dedicated
             // searchable hash field — cannot compare AES-GCM ciphertexts directly
 
+            logger.info("Creating new user: ${registerJson.name} ${registerJson.surname}")
             val user = UserDocument(
                 name = registerJson.name,
                 surname = registerJson.surname,
@@ -242,6 +247,18 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
                 )
             }
         } catch (e: Exception) {
+            e.printStackTrace()
+            throw UserException(e.message.toString())
+        }
+    }
+
+    suspend fun getUserInfo(userId: String): UserDocument{
+        try{
+            val user = usersCollection.findOne(UserDocument::_id eq ObjectId(userId.toString()))
+                ?: throw UserException("User not found")
+
+            return user
+        }catch (e: Exception){
             e.printStackTrace()
             throw UserException(e.message.toString())
         }
