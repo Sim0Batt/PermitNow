@@ -3,6 +3,7 @@ package server
 import configuration.ReadXMLResources
 import database.DatabaseConfig
 import io.ktor.http.*
+import io.ktor.http.content.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -10,17 +11,21 @@ import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.request.receive
+import io.ktor.server.request.receiveMultipart
 import io.ktor.server.response.respond
 import io.ktor.server.routing.*
 import kotlinx.serialization.json.Json
+import java.io.File
 import exceptions.UserException
+import managers.LicenseManager
 import managers.UserManager
+import script.LicenseRecognition
 import server.models.input.ChangePasswordJson
 import server.models.input.ProfileUpdateJson
 import server.models.input.LoginJson
 import server.models.input.RegisterJson
 import server.models.output.LoginResponseJson
-
+import utils.imagePath
 
 
 val permitNowConfiguration = ReadXMLResources.getConfiguration()
@@ -57,7 +62,8 @@ fun Application.module() {
 
     // Managers
     val userManager = UserManager(connection, permitNowConfiguration)
-
+    val licenseRecognition = LicenseRecognition(permitNowConfiguration, userManager)
+    val licenseManager = LicenseManager(connection, permitNowConfiguration, licenseRecognition)
 
     // Routes
     routing {
@@ -175,6 +181,59 @@ fun Application.module() {
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
             }
+        }
+        
+        
+        
+        
+        // FISHING LICENSE
+        post("/license/fishing"){
+            val multipart = call.receiveMultipart()
+            var userId: String? = null
+            var imageFile: File? = null
+
+            multipart.forEachPart { part ->
+                when (part) {
+                    is PartData.FormItem -> {
+                        if (part.name == "userId") {
+                            userId = part.value
+                        }
+                    }
+
+                    is PartData.FileItem -> {
+                        val fileName = "${userId}_FISHING.jpg"
+                        val uploadDir = File(imagePath)
+                        if (!uploadDir.exists()) {
+                            uploadDir.mkdirs()
+                        }
+                        imageFile = File(uploadDir, fileName)
+                        part.streamProvider().use { input ->
+                            imageFile.outputStream().buffered().use { output ->
+                                input.copyTo(output)
+                            }
+                        }
+                    }
+
+                    else -> {}
+                }
+                part.dispose()
+            }
+
+            if (userId == null || imageFile == null) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing userId or image file"))
+                return@post
+            }
+
+            try {
+                val userDocument = userManager.getUserInfo(userId)
+                val imageFile = File(imagePath + "${userDocument._id}_FISHING.jpg")
+                val fishingDocument = licenseRecognition.readFishingLicense(userDocument, imageFile)
+                licenseManager.addLicense(userId, fishingDocument)
+                call.respond(HttpStatusCode.OK, "License added successfully")
+            }catch (e: Exception){
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+
         }
     }
 }
