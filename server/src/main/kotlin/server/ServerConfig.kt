@@ -18,9 +18,11 @@ import kotlinx.serialization.json.Json
 import java.io.File
 import exceptions.UserException
 import managers.LicenseManager
+import managers.PermitManager
 import managers.UserManager
 import server.models.input.AdminCreateFishingLicenseJson
 import server.models.input.AdminCreateUserJson
+import server.models.input.FishingPermitRequestJson
 import server.models.input.UpdateFishingLicenseJson
 import script.LicenseRecognition
 import server.models.input.ChangePasswordJson
@@ -67,6 +69,7 @@ fun Application.module() {
     val userManager = UserManager(connection, permitNowConfiguration)
     val licenseRecognition = LicenseRecognition(permitNowConfiguration, userManager)
     val licenseManager = LicenseManager(connection, permitNowConfiguration, licenseRecognition)
+    val permitManager = PermitManager(connection, permitNowConfiguration)
 
     // Routes
     routing {
@@ -317,6 +320,33 @@ fun Application.module() {
             try {
                 licenseManager.deleteLicense(userId)
                 call.respond(HttpStatusCode.OK, mapOf("message" to "License deleted successfully"))
+            } catch (e: UserException) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
+
+
+        // FISHING PERMIT
+        post("/permit/fishing") {
+            // TODO(auth): require authenticated user matching userId
+            try {
+                val data = call.receive<FishingPermitRequestJson>()
+                permitManager.requestPermit(data)
+                call.respond(HttpStatusCode.Created, mapOf("message" to "Permit created successfully"))
+            } catch (e: UserException) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
+        post("/permit/fishing/admin") {
+            // TODO(auth): require admin role
+            try {
+                val data = call.receive<FishingPermitRequestJson>()
+                permitManager.createPermitAdmin(data)
+                call.respond(HttpStatusCode.Created, mapOf("message" to "Permit created successfully"))
             } catch (e: UserException) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
             } catch (e: Exception) {
