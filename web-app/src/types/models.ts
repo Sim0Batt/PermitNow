@@ -43,3 +43,49 @@ export interface Licence {
   qrCodeToken: string;
   userId: number;
 }
+
+// Fishing license management (admin) — mirrors the server DTOs
+export interface LicenseListItem {
+  userId: string;
+  name: string;
+  surname: string;
+  email: string;
+  qrCodeToken: string;
+  status: string;
+  licenseNumber: string;
+  releasedBy: string;
+  season: string;
+  noKill: boolean;
+  bookCode: string;
+  expirationDate: string;
+}
+
+export interface FishingLicense {
+  qrCodeToken: string;
+  status: string;
+  licenseNumber: string;
+  releasedBy: string;
+  season: string;
+  noKill: boolean;
+  bookCode: string;
+  expirationDate: string;
+}
+
+export interface CreateLicensePayload {
+  userId: string;
+  licenseNumber: string;
+  releasedBy: string;
+  season: string;
+  noKill: boolean;
+  bookCode: string;
+  expirationDate: string;
+}
+
+export interface UpdateLicensePayload {
+  licenseNumber: string;
+  releasedBy: string;
+  season: string;
+  noKill: boolean;
+  bookCode: string;
+  expirationDate: string;
+}
