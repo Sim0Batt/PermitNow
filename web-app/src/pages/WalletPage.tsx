@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { NavBar } from '../components/NavBar';
 import { SpidLock } from '../components/SpidLock';
@@ -70,6 +71,7 @@ export function WalletPage() {
           )}
 
           {license && <FishingLicenseCard license={license} />}
+
         </main>
       </SpidLock>
     </div>
@@ -77,6 +79,7 @@ export function WalletPage() {
 }
 
 function FishingLicenseCard({ license }: { license: FishingLicenseInfoJson }) {
+  const navigate = useNavigate();
   const expired = new Date(license.expirationDate) < new Date();
   const statusLabel =
     license.status === 'active'
@@ -102,8 +105,13 @@ function FishingLicenseCard({ license }: { license: FishingLicenseInfoJson }) {
 
   return (
     <div
-      className="overflow-hidden rounded-2xl shadow-md"
+      className="overflow-hidden rounded-2xl shadow-md cursor-pointer transition-transform hover:scale-[1.01] hover:shadow-lg"
       style={{ background: `linear-gradient(135deg, ${BRAND} 0%, ${BRAND_DARK} 100%)` }}
+      onClick={() => navigate(`/licence/${license.id}`)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && navigate(`/licence/${license.id}`)}
+      aria-label={`Apri dettaglio licenza N° ${license.licenseNumber}`}
     >
       {/* Card header */}
       <div className="flex items-center justify-between px-6 pt-5 pb-4">
@@ -162,7 +170,7 @@ function FishingLicenseCard({ license }: { license: FishingLicenseInfoJson }) {
 
       {/* Card footer */}
       <div className="flex items-center justify-between px-6 py-3">
-        <p className="text-xs text-white/60">Licenza valida</p>
+        <p className="text-xs text-white/60">Tocca per i dettagli</p>
         <p className="text-sm font-semibold text-white">{statusLabel}</p>
       </div>
     </div>

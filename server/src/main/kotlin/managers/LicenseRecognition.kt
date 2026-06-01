@@ -81,8 +81,10 @@ class LicenseRecognition(val permitNowConfiguration: PermitNowConfiguration, val
 
             val finalJson = Json.decodeFromString<FishingStructuredOutput>(responseText.removePrefix("```json").removeSuffix("```").trim())
 
+            logger.info("Found info:\n $finalJson")
+
             if(userManager.decryptFiscalCode(userDocument.fiscalCode) != finalJson.fiscalCode) {
-                logger.info("Fiscal code does not match with user data")
+                logger.severe("Fiscal code does not match with user data")
                 throw IllegalStateException("Fiscal code does not match with user data")
             }
 

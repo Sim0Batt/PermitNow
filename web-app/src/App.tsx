@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
 import { WalletPage } from './pages/WalletPage';
 import { LicencePage } from './pages/LicencePage';
+import { LicenseDetailPage } from './pages/LicenseDetailPage';
 import { PermitsPage } from './pages/PermitsPage';
 import { RegisterPlaceholderPage } from './pages/RegisterPage';
 import DashboardHomePage from './dashboard/DashboardHomePage';
@@ -33,6 +34,10 @@ const router = createBrowserRouter([
       {
         path: '/wallet',
         element: <WalletPage />,
+      },
+      {
+        path: '/licence/:id',
+        element: <LicenseDetailPage />,
       },
       {
         path: '/licence',
