@@ -61,7 +61,7 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
         }
     }
 
-    suspend fun login(loginJson: LoginJson): String {
+    suspend fun login(loginJson: LoginJson): LoginResponseJson {
         try{
             if (!isValidLogin(loginJson)) throw UserException("Invalid login data")
 
@@ -71,7 +71,10 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
 
             if (!verifyPassword(loginJson.password, user.password)) throw UserException("Wrong password")
 
-            return user._id.toHexString()
+            return LoginResponseJson(
+                userId = user._id.toHexString(),
+                verified = user.verified
+            )
         }catch (e: Exception){
             e.printStackTrace()
             throw UserException(e.message.toString())
@@ -82,10 +85,12 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
         try {
             if (!isValidLogin(loginJson)) throw UserException("Invalid login data")
 
+            logger.info("Trying login for user:\n$loginJson")
+
             val user = usersCollection.findOne(
                 and(UserDocument::email eq loginJson.email, UserDocument::deleted eq false)
             ) ?: throw UserException("User not found")
-
+            
             if (!verifyPassword(loginJson.password, user.password)) throw UserException("Wrong password")
 
             if (user.role != "admin") throw UserException("Access denied: user is not an admin")

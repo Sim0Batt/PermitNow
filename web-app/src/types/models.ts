@@ -43,3 +43,27 @@ export interface Licence {
   qrCodeToken: string;
   userId: number;
 }
+
+export interface FishingLicense {
+  id: string;
+  qrCodeToken: string;
+  status: string;
+  licenseNumber: string;
+  releasedBy: string;
+  season: string;
+  noKill: boolean;
+  bookCode: string;
+  expirationDate: string;
+}
+
+export interface FishingLicenseInfoJson {
+  id: string;
+  qrCodeToken: string;
+  status: string;
+  licenseNumber: string;
+  releasedBy: string;
+  season: string;
+  noKill: boolean;
+  bookCode: string;
+  expirationDate: string;
+}

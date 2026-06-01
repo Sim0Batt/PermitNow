@@ -3,7 +3,6 @@ import { HomePage } from './pages/HomePage';
 import { WalletPage } from './pages/WalletPage';
 import { LicencePage } from './pages/LicencePage';
 import { PermitsPage } from './pages/PermitsPage';
-import { LoginPlaceholderPage } from './pages/LoginPage';
 import { RegisterPlaceholderPage } from './pages/RegisterPage';
 import DashboardHomePage from './dashboard/DashboardHomePage';
 import { DashboardLoginPage } from './dashboard/pages/DashboardLoginPage';
@@ -12,6 +11,7 @@ import { UserInfoPage } from './dashboard/pages/user/UserInfoPage';
 import { NewUserPage } from './dashboard/pages/user/NewUserPage';
 import { AuthProvider } from './context/AuthContext';
 import { RequireAuth } from './components/RequireAuth';
+import { LoginPage } from './pages/LoginPage';
 
 const router = createBrowserRouter([
   {
@@ -21,7 +21,7 @@ const router = createBrowserRouter([
   // TODO(auth): replace with real login/register pages (issues #43, #44)
   {
     path: '/login',
-    element: <LoginPlaceholderPage />,
+    element: <LoginPage />,
   },
   {
     path: '/register',

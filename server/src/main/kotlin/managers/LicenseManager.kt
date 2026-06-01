@@ -4,12 +4,14 @@ import configuration.PermitNowConfiguration
 import database.DatabaseConfig
 import database.documents.FishingLicenseDocument
 import database.documents.UserDocument
+import exceptions.FishingLicenseException
 import exceptions.UserException
 import org.bson.types.ObjectId
 import org.litote.kmongo.and
 import org.litote.kmongo.eq
 import org.litote.kmongo.setValue
 import script.LicenseRecognition
+import server.models.output.FishingLicenseInfoJson
 import java.util.logging.Logger
 
 class LicenseManager(val connection: DatabaseConfig, val permitNowConfiguration: PermitNowConfiguration, val licenseRecognition: LicenseRecognition) {
@@ -82,6 +84,30 @@ class LicenseManager(val connection: DatabaseConfig, val permitNowConfiguration:
         } catch (e: Exception) {
             e.printStackTrace()
             throw UserException(e.message.toString())
+        }
+    }
+
+    suspend fun getLicenseInfo(userId: String): FishingLicenseInfoJson{
+        try{
+            val license = userCollection.findOne(FishingLicenseDocument::_id eq ObjectId(userId)).let { user ->
+                FishingLicenseInfoJson(
+                    user!!.fishingLicense!!._id.toString(),
+                    user.fishingLicense.qrCodeToken,
+                    user.fishingLicense.status,
+                    user.fishingLicense.licenseNumber,
+                    user.fishingLicense.releasedBy,
+                    user.fishingLicense.season,
+                    user.fishingLicense.noKill,
+                    user.fishingLicense.bookCode,
+                    user.fishingLicense.expirationDate
+                )
+            }
+            logger.info("Sending License info:\n $license")
+            return license
+
+        }catch (e: Exception){
+            e.printStackTrace()
+            throw FishingLicenseException("License not Found: " + e.message.toString())
         }
     }
 

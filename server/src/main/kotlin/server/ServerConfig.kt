@@ -267,6 +267,17 @@ fun Application.module() {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
             }
         }
+
+
+        get("license/{userId}"){
+            try {
+                val userId = call.parameters["userId"].toString()
+                val licenseInfo = licenseManager.getLicenseInfo(userId)
+                call.respond(HttpStatusCode.OK, licenseInfo)
+            }catch (e: Exception){
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.toString()))
+            }
+        }
     }
 }
 
