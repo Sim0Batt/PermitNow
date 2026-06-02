@@ -1,0 +1,19 @@
+package utils.models
+
+enum class FishingZone {
+    ALTO_SARCA,
+    BASSO_SARCA,
+    VAL_DI_NON,
+    VALSUGANA,
+    ALTO_CHIESE,
+    LAGO_DI_GARDA,
+    LAGO_DI_TOVEL,
+    LAGO_DI_SANTA_GIUSTINA,
+    LAGO_DI_LEDRO,
+    LAGO_DI_CAVEDINE,
+    FIUME_ADIGE,
+    FIUME_BRENTA,
+    ALTO_ADIGE_BOLZANO,
+    VAL_PUSTERIA,
+    VAL_GARDENA
+}
