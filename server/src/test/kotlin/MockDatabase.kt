@@ -73,7 +73,18 @@ object MockDatabase {
             verified = true
         )
 
-        config.userCollection.insertMany(listOf(testUser, testAdmin, testUserNonValid, licenseUser))
+        val deletedUser = UserDocument(
+            name = "Deleted",
+            surname = "Deleted",
+            email = "deleted@test.com",
+            password = userManager.hashPassword("test"),
+            fiscalCode = userManager.encryptFiscalCode("TSTTST00A00A000", PermitNowConfiguration.aesKey),
+            role = "user",
+            verified = true,
+            deleted = true
+        )
+
+        config.userCollection.insertMany(listOf(testUser, testAdmin, testUserNonValid, licenseUser, deletedUser))
 
         // Verifichiamo che ci siano usando la stessa collection
         println("Database created with values: " + config.userCollection.find().toList())
