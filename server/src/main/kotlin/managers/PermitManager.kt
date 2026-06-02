@@ -9,6 +9,7 @@ import org.bson.types.ObjectId
 import org.litote.kmongo.and
 import org.litote.kmongo.eq
 import server.models.input.FishingPermitRequestJson
+import server.models.output.FishingPermitJson
 import utils.UtilsFunctions
 import utils.models.FishingZone
 import java.time.LocalDate
@@ -29,6 +30,38 @@ class PermitManager(val connection: DatabaseConfig, val permitNowConfiguration: 
 
     suspend fun createPermitAdmin(data: FishingPermitRequestJson) {
         createPermit(data, free = true)
+    }
+
+    suspend fun getPermitsByUser(userId: String): List<FishingPermitJson> {
+        try {
+            // Validate the userId; an unparsable value is a client error
+            try {
+                ObjectId(userId)
+            } catch (e: IllegalArgumentException) {
+                throw UserException("Invalid user id")
+            }
+
+            // Ownership is stored as the hex string of the user's ObjectId
+            return permitCollection
+                .find(FishingPermitDocument::userId eq userId)
+                .toList()
+                .map { it.toJson() }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw UserException(e.message.toString())
+        }
+    }
+
+    suspend fun listPermits(): List<FishingPermitJson> {
+        try {
+            return permitCollection
+                .find()
+                .toList()
+                .map { it.toJson() }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw UserException(e.message.toString())
+        }
     }
 
     private suspend fun createPermit(data: FishingPermitRequestJson, free: Boolean) {
@@ -117,6 +150,22 @@ class PermitManager(val connection: DatabaseConfig, val permitNowConfiguration: 
         "ANNUALE" -> 160.0
         else -> throw UserException("Invalid permit type")
     }
+
+    private fun FishingPermitDocument.toJson(): FishingPermitJson = FishingPermitJson(
+        permitId = _id.toHexString(),
+        userId = userId,
+        licenseId = licenseId,
+        zone = zone,
+        type = type,
+        noKill = noKill,
+        startDate = startDate,
+        endDate = endDate,
+        numberOfRods = numberOfRods,
+        maxCatch = maxCatch,
+        price = price,
+        status = status,
+        qrCodeToken = qrCodeToken
+    )
 
     companion object {
         private val PERMIT_TYPES = setOf("GIORNALIERO", "SETTIMANALE", "ANNUALE")
