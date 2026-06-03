@@ -21,7 +21,6 @@ import java.util.logging.Logger
 
 class LicenseManager(val connection: DatabaseConfig, val permitNowConfiguration: PermitNowConfiguration, val licenseRecognition: LicenseRecognition) {
     val userCollection = connection.userCollection
-    val licenseCollection = connection.fishingCollection
     val booksManager = BooksManager(connection, permitNowConfiguration)
 
     val logger = Logger.getLogger(this::class.java.name)
@@ -47,9 +46,8 @@ class LicenseManager(val connection: DatabaseConfig, val permitNowConfiguration:
                 throw IllegalStateException("User is not a user")
             }
 
-            licenseCollection.insertOne(fishingDocument)
             userCollection.updateOneById(ObjectId(userId), setValue(UserDocument::fishingLicense, fishingDocument))
-            booksManager.createNewPage(fishingDocument.bookCode)
+            booksManager.createNewPage(userId)
 
             logger.info("Fishing Licence Added to: ${user.email}")
         }catch (e: Exception){
@@ -174,19 +172,6 @@ class LicenseManager(val connection: DatabaseConfig, val permitNowConfiguration:
                 expirationDate = data.expirationDate
             )
 
-            // Sync standalone collection (matched by license _id)
-            licenseCollection.updateOne(
-                FishingLicenseDocument::_id eq license._id,
-                combine(
-                    setValue(FishingLicenseDocument::licenseNumber, data.licenseNumber),
-                    setValue(FishingLicenseDocument::releasedBy, data.releasedBy),
-                    setValue(FishingLicenseDocument::season, data.season),
-                    setValue(FishingLicenseDocument::noKill, data.noKill),
-                    setValue(FishingLicenseDocument::bookCode, data.bookCode),
-                    setValue(FishingLicenseDocument::expirationDate, data.expirationDate)
-                )
-            )
-
             // Sync embedded copy on the user
             userCollection.updateOne(
                 UserDocument::_id eq objectId,
@@ -220,10 +205,6 @@ class LicenseManager(val connection: DatabaseConfig, val permitNowConfiguration:
             if (license.status == "DELETED") throw UserException("License already deleted")
 
             // Soft delete: mark the license document and detach it from the user
-            licenseCollection.updateOne(
-                FishingLicenseDocument::_id eq license._id,
-                setValue(FishingLicenseDocument::status, "DELETED")
-            )
             userCollection.updateOne(
                 UserDocument::_id eq objectId,
                 setValue(UserDocument::fishingLicense, null)

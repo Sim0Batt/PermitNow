@@ -3,6 +3,7 @@ import { HomePage } from './pages/HomePage';
 import { WalletPage } from './pages/WalletPage';
 import { LicencePage } from './pages/LicencePage';
 import { LicenseDetailPage } from './pages/LicenseDetailPage';
+import { FishingBookPage } from './pages/FishingBookPage';
 import { PermitsPage } from './pages/PermitsPage';
 import { RegisterPlaceholderPage } from './pages/RegisterPage';
 import DashboardHomePage from './dashboard/DashboardHomePage';
@@ -42,6 +43,10 @@ const router = createBrowserRouter([
       {
         path: '/licence/:id',
         element: <LicenseDetailPage />,
+      },
+      {
+        path: '/book/:bookId',
+        element: <FishingBookPage />,
       },
       {
         path: '/licence',
