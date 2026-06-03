@@ -1,0 +1,14 @@
+package server.models.input
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+class AdminCreateFishingLicenseJson(
+    val userId: String,
+    val licenseNumber: String,
+    val releasedBy: String,
+    val season: String,
+    val noKill: Boolean,
+    val bookCode: String,
+    val expirationDate: String
+)

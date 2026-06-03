@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { adminApi } from '../../../api/admin';
+import { licenseApi } from '../../../api/license';
 import { NavBarDashboard } from '../../components/NavBarDashboard';
 import { VerifyUserButton } from '../../components/VerifyUserButton';
 import { DeleteUserButton } from '../../components/DeleteUserButton';
@@ -11,6 +12,7 @@ export const UserInfoPage = () => {
   const navigate = useNavigate();
 
   const [user, setUser] = useState<UserListItem | null>(null);
+  const [hasLicense, setHasLicense] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,7 +24,16 @@ export const UserInfoPage = () => {
       const all = await adminApi.listUsers();
       const found = all.find((u) => u.id === id) ?? null;
       setUser(found);
-      if (!found) setError('Utente non trovato.');
+      if (!found) {
+        setError('Utente non trovato.');
+        return;
+      }
+      try {
+        await licenseApi.getLicense(id);
+        setHasLicense(true);
+      } catch {
+        setHasLicense(false);
+      }
     } catch {
       setError('Errore nel caricamento dell\'utente.');
     } finally {
@@ -80,6 +91,28 @@ export const UserInfoPage = () => {
                 disabled={user.deleted}
                 onSuccess={() => navigate('/dashboard/user')}
               />
+
+              {hasLicense === true && (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/dashboard/licenses/${user.id}`)}
+                  className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                >
+                  Vai alla licenza
+                </button>
+              )}
+              {hasLicense === false &&
+                user.verified &&
+                user.role === 'user' &&
+                !user.deleted && (
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/dashboard/licenses/${user.id}/create`)}
+                    className="rounded bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+                  >
+                    Aggiungi licenza
+                  </button>
+                )}
             </div>
           </div>
         )}

@@ -4,14 +4,19 @@ import configuration.PermitNowConfiguration
 import database.DatabaseConfig
 import database.documents.FishingLicenseDocument
 import database.documents.UserDocument
-import exceptions.FishingLicenseException
 import exceptions.UserException
 import org.bson.types.ObjectId
 import org.litote.kmongo.and
+import org.litote.kmongo.combine
 import org.litote.kmongo.eq
+import org.litote.kmongo.ne
 import org.litote.kmongo.setValue
 import script.LicenseRecognition
-import server.models.output.FishingLicenseInfoJson
+import server.models.input.AdminCreateFishingLicenseJson
+import server.models.input.UpdateFishingLicenseJson
+import server.models.output.FishingLicenseJson
+import server.models.output.LicenseListItemJson
+import utils.UtilsFunctions
 import java.util.logging.Logger
 
 class LicenseManager(val connection: DatabaseConfig, val permitNowConfiguration: PermitNowConfiguration, val licenseRecognition: LicenseRecognition) {
@@ -53,6 +58,148 @@ class LicenseManager(val connection: DatabaseConfig, val permitNowConfiguration:
         }
     }
 
+    suspend fun listLicenses(): List<LicenseListItemJson> {
+        try {
+            return userCollection
+                .find(and(UserDocument::deleted eq false, UserDocument::fishingLicense ne null))
+                .toList()
+                .mapNotNull { user ->
+                    val license = user.fishingLicense ?: return@mapNotNull null
+                    LicenseListItemJson(
+                        userId = user._id.toHexString(),
+                        name = user.name,
+                        surname = user.surname,
+                        email = user.email,
+                        qrCodeToken = license.qrCodeToken,
+                        status = license.status,
+                        licenseNumber = license.licenseNumber,
+                        releasedBy = license.releasedBy,
+                        season = license.season,
+                        noKill = license.noKill,
+                        bookCode = license.bookCode,
+                        expirationDate = license.expirationDate
+                    )
+                }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw UserException(e.message.toString())
+        }
+    }
+
+    suspend fun createLicenseManually(data: AdminCreateFishingLicenseJson) {
+        try {
+            if (data.userId.isBlank()) throw UserException("User id cannot be blank")
+            if (data.licenseNumber.isBlank()) throw UserException("License number cannot be blank")
+            if (data.season.isBlank()) throw UserException("Season cannot be blank")
+            if (data.expirationDate.isBlank()) throw UserException("Expiration date cannot be blank")
+
+            val fishingDocument = FishingLicenseDocument(
+                qrCodeToken = UtilsFunctions.generateQRCodeToken(),
+                status = "VALID",
+                licenseNumber = data.licenseNumber,
+                releasedBy = data.releasedBy,
+                season = data.season,
+                noKill = data.noKill,
+                bookCode = data.bookCode,
+                expirationDate = data.expirationDate
+            )
+
+            addLicense(data.userId, fishingDocument)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw UserException(e.message.toString())
+        }
+    }
+
+    suspend fun getLicense(userId: String): FishingLicenseJson {
+        try {
+            val objectId = try {
+                ObjectId(userId)
+            } catch (e: IllegalArgumentException) {
+                throw UserException("Invalid user id")
+            }
+
+            val user = userCollection.findOne(
+                and(UserDocument::_id eq objectId, UserDocument::deleted eq false)
+            ) ?: throw UserException("User not found")
+
+            val license = user.fishingLicense ?: throw UserException("License not found")
+
+            return FishingLicenseJson(
+                qrCodeToken = license.qrCodeToken,
+                status = license.status,
+                licenseNumber = license.licenseNumber,
+                releasedBy = license.releasedBy,
+                season = license.season,
+                noKill = license.noKill,
+                bookCode = license.bookCode,
+                expirationDate = license.expirationDate
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw UserException(e.message.toString())
+        }
+    }
+
+    suspend fun updateLicense(userId: String, data: UpdateFishingLicenseJson) {
+        try {
+            if (data.licenseNumber.isBlank()) throw UserException("License number cannot be blank")
+            if (data.season.isBlank()) throw UserException("Season cannot be blank")
+            if (data.expirationDate.isBlank()) throw UserException("Expiration date cannot be blank")
+
+            val objectId = try {
+                ObjectId(userId)
+            } catch (e: IllegalArgumentException) {
+                throw UserException("Invalid user id")
+            }
+
+            val user = userCollection.findOne(
+                and(UserDocument::_id eq objectId, UserDocument::deleted eq false)
+            ) ?: throw UserException("User not found")
+
+            val license = user.fishingLicense ?: throw UserException("License not found")
+
+            if (license.status == "DELETED") throw UserException("Cannot update a deleted license")
+
+            // Preserve identity (_id, qrCodeToken) and status; only content fields change
+            val updated = FishingLicenseDocument(
+                _id = license._id,
+                qrCodeToken = license.qrCodeToken,
+                status = license.status,
+                licenseNumber = data.licenseNumber,
+                releasedBy = data.releasedBy,
+                season = data.season,
+                noKill = data.noKill,
+                bookCode = data.bookCode,
+                expirationDate = data.expirationDate
+            )
+
+            // Sync standalone collection (matched by license _id)
+            licenseCollection.updateOne(
+                FishingLicenseDocument::_id eq license._id,
+                combine(
+                    setValue(FishingLicenseDocument::licenseNumber, data.licenseNumber),
+                    setValue(FishingLicenseDocument::releasedBy, data.releasedBy),
+                    setValue(FishingLicenseDocument::season, data.season),
+                    setValue(FishingLicenseDocument::noKill, data.noKill),
+                    setValue(FishingLicenseDocument::bookCode, data.bookCode),
+                    setValue(FishingLicenseDocument::expirationDate, data.expirationDate)
+                )
+            )
+
+            // Sync embedded copy on the user
+            userCollection.updateOne(
+                UserDocument::_id eq objectId,
+                setValue(UserDocument::fishingLicense, updated)
+            )
+
+            logger.info("Fishing License updated for: ${user.email}")
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw UserException(e.message.toString())
+        }
+    }
+
     suspend fun deleteLicense(userId: String) {
         try {
             logger.info("Starting Fishing License deletion process")
@@ -88,52 +235,4 @@ class LicenseManager(val connection: DatabaseConfig, val permitNowConfiguration:
             throw UserException(e.message.toString())
         }
     }
-
-    suspend fun getLicenseInfo(userId: String): FishingLicenseInfoJson{
-        try{
-            val license = userCollection.findOne(FishingLicenseDocument::_id eq ObjectId(userId)).let { user ->
-                FishingLicenseInfoJson(
-                    user!!.fishingLicense!!._id.toString(),
-                    user.fishingLicense.qrCodeToken,
-                    user.fishingLicense.status,
-                    user.fishingLicense.licenseNumber,
-                    user.fishingLicense.releasedBy,
-                    user.fishingLicense.season,
-                    user.fishingLicense.noKill,
-                    user.fishingLicense.bookCode,
-                    user.fishingLicense.expirationDate
-                )
-            }
-            logger.info("Sending License info:\n $license")
-            return license
-
-        }catch (e: Exception){
-            e.printStackTrace()
-            throw FishingLicenseException("License not Found: " + e.message.toString())
-        }
-    }
-
-
-    suspend fun listLicenses(): List<FishingLicenseInfoJson>{
-        try {
-            return licenseCollection.find().toList().map {
-                FishingLicenseInfoJson(
-                    it._id.toString(),
-                    it.qrCodeToken,
-                    it.status,
-                    it.licenseNumber,
-                    it.releasedBy,
-                    it.season,
-                    it.noKill,
-                    it.bookCode,
-                    it.expirationDate
-                )
-            }
-        }catch (e: Exception){
-            e.printStackTrace()
-            throw FishingLicenseException("Error listing licenses: " + e.message.toString())
-        }
-    }
-
-
 }

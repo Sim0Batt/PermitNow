@@ -1,9 +1,40 @@
 import { apiClient } from './client';
-import type { FishingLicenseInfoJson } from '../types/models';
+import type {
+  LicenseListItem,
+  FishingLicense,
+  FishingLicenseInfoJson,
+  CreateLicensePayload,
+  UpdateLicensePayload,
+} from '../types/models';
 
 export const licenseApi = {
-  async getUserLicense(userId: string): Promise<FishingLicenseInfoJson> {
-    const response = await apiClient.get<FishingLicenseInfoJson>(`/license/${userId}`);
+  async listLicenses(): Promise<LicenseListItem[]> {
+    const response = await apiClient.get<LicenseListItem[]>('/license/list');
     return response.data;
+  },
+
+  async getLicense(userId: string): Promise<FishingLicense> {
+    const response = await apiClient.get<FishingLicense>(`/license/fishing/${userId}`);
+    return response.data;
+  },
+
+  async getUserLicense(userId: string): Promise<FishingLicenseInfoJson> {
+    const response = await apiClient.get<FishingLicense>(`/license/fishing/${userId}`);
+    return {
+      id: userId,
+      ...response.data,
+    };
+  },
+
+  async createLicense(payload: CreateLicensePayload): Promise<void> {
+    await apiClient.post('/license/fishing/admin', payload);
+  },
+
+  async updateLicense(userId: string, payload: UpdateLicensePayload): Promise<void> {
+    await apiClient.put(`/license/fishing/${userId}`, payload);
+  },
+
+  async deleteLicense(userId: string): Promise<void> {
+    await apiClient.delete(`/license/fishing/${userId}`);
   },
 };

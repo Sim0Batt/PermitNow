@@ -18,8 +18,12 @@ import kotlinx.serialization.json.Json
 import java.io.File
 import exceptions.UserException
 import managers.LicenseManager
+import managers.PermitManager
 import managers.UserManager
+import server.models.input.AdminCreateFishingLicenseJson
 import server.models.input.AdminCreateUserJson
+import server.models.input.FishingPermitRequestJson
+import server.models.input.UpdateFishingLicenseJson
 import script.LicenseRecognition
 import server.models.input.ChangePasswordJson
 import server.models.input.ProfileUpdateJson
@@ -66,6 +70,7 @@ fun Application.module() {
     val userManager = UserManager(connection, permitNowConfiguration)
     val licenseRecognition = LicenseRecognition(permitNowConfiguration, userManager)
     val licenseManager = LicenseManager(connection, permitNowConfiguration, licenseRecognition)
+    val permitManager = PermitManager(connection, permitNowConfiguration)
 
     // Routes
     routing {
@@ -255,6 +260,16 @@ fun Application.module() {
 
 
         // FISHING LICENSE
+        get("/license/list") {
+            // TODO(auth): require admin role
+            try {
+                call.respond(HttpStatusCode.OK, licenseManager.listLicenses())
+            } catch (e: UserException) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
         post("/license/fishing"){
             val multipart = call.receiveMultipart()
             var userId: String? = null
@@ -303,6 +318,50 @@ fun Application.module() {
             }
 
         }
+        post("/license/fishing/admin") {
+            // TODO(auth): require admin role
+            try {
+                val data = call.receive<AdminCreateFishingLicenseJson>()
+                licenseManager.createLicenseManually(data)
+                call.respond(HttpStatusCode.Created, mapOf("message" to "License created successfully"))
+            } catch (e: UserException) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
+        get("/license/fishing/{userId}") {
+            // TODO(auth): require authenticated user matching userId or admin role
+            val userId = call.parameters["userId"]
+            if (userId == null) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing userId parameter"))
+                return@get
+            }
+            try {
+                call.respond(HttpStatusCode.OK, licenseManager.getLicense(userId))
+            } catch (e: UserException) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
+        put("/license/fishing/{userId}") {
+            // TODO(auth): require admin role
+            val userId = call.parameters["userId"]
+            if (userId == null) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing userId parameter"))
+                return@put
+            }
+            try {
+                val data = call.receive<UpdateFishingLicenseJson>()
+                licenseManager.updateLicense(userId, data)
+                call.respond(HttpStatusCode.OK, mapOf("message" to "License updated successfully"))
+            } catch (e: UserException) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
         delete("/license/fishing/{userId}") {
             // TODO(auth): require authenticated user matching userId
             val userId = call.parameters["userId"]
@@ -321,15 +380,56 @@ fun Application.module() {
         }
 
 
-        get("license/{userId}"){
+        // FISHING PERMIT
+        get("/permit/list") {
+            // TODO(auth): require admin role
             try {
-                val userId = call.parameters["userId"].toString()
-                val licenseInfo = licenseManager.getLicenseInfo(userId)
-                call.respond(HttpStatusCode.OK, licenseInfo)
-            }catch (e: Exception){
-                call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.toString()))
+                call.respond(HttpStatusCode.OK, permitManager.listPermits())
+            } catch (e: UserException) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
             }
         }
+        post("/permit/fishing") {
+            // TODO(auth): require authenticated user matching userId
+            try {
+                val data = call.receive<FishingPermitRequestJson>()
+                permitManager.requestPermit(data)
+                call.respond(HttpStatusCode.Created, mapOf("message" to "Permit created successfully"))
+            } catch (e: UserException) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
+        post("/permit/fishing/admin") {
+            // TODO(auth): require admin role
+            try {
+                val data = call.receive<FishingPermitRequestJson>()
+                permitManager.createPermitAdmin(data)
+                call.respond(HttpStatusCode.Created, mapOf("message" to "Permit created successfully"))
+            } catch (e: UserException) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
+        get("/permit/fishing/{userId}") {
+            // TODO(auth): require authenticated user matching userId or admin role
+            val userId = call.parameters["userId"]
+            if (userId == null) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing userId parameter"))
+                return@get
+            }
+            try {
+                call.respond(HttpStatusCode.OK, permitManager.getPermitsByUser(userId))
+            } catch (e: UserException) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
+           } catch (e: Exception) {
+               call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+           }
+       }
     }
 }
 
