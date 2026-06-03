@@ -1,8 +1,8 @@
-# PermitNow 🎣
+# PermitNow
 
 PermitNow è un sistema integrato per la gestione digitale delle licenze di pesca e dei relativi permessi[cite: 3]. Il progetto mira a digitalizzare e semplificare l'emissione, il controllo e la registrazione delle catture, sostituendo i tradizionali libretti cartacei con un'infrastruttura cloud moderna.
 
-## 🏗️ Struttura del Progetto
+## Struttura del Progetto
 
 Il sistema è diviso in tre macro-componenti principali[cite: 3], contenuti nelle rispettive cartelle della repository:
 
@@ -13,16 +13,16 @@ Il sistema è diviso in tre macro-componenti principali[cite: 3], contenuti nell
 *   **`mobile-app/` (App Utente):** 
     Applicazione mobile multipiattaforma sviluppata in **React Native (Expo)**. Dedicata ai pescatori per visualizzare la propria licenza digitale, scansionare documenti e registrare agilmente le giornate di pesca e le catture (libretto digitale)[cite: 3].
 
-## 📚 Documentazione API
+## Documentazione API
 
 La documentazione completa delle API RESTful è scritta in formato API Blueprint ed è consultabile nel file `apiary.apib`[cite: 3] situato nella root del progetto. Può essere importata su Apiary per generare mock server e interfacce grafiche interattive.
 
-## 👥 Team di Sviluppo
+## Gruppo
 
-Questo progetto è stato progettato e sviluppato da:
+Questo progetto è stato progettato e sviluppato dal Gruppo 3, composto da:
 *   **Simone Battisti**
 *   **Nicola Avellino**
 *   **Davide Basso**
 
 ---
-*Progetto universitario - 2026*
+*Progetto Ingegneria del Software - 2026*
