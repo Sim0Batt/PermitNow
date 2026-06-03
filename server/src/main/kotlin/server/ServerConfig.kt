@@ -31,6 +31,7 @@ import server.models.input.LoginJson
 import server.models.input.RegisterJson
 import server.models.output.LoginResponseJson
 import utils.imagePath
+import java.sql.SQLSyntaxErrorException
 
 
 val permitNowConfiguration = ReadXMLResources.getConfiguration()
@@ -73,6 +74,57 @@ fun Application.module() {
 
     // Routes
     routing {
+        // STATUS ROUTES
+        get("/status"){
+            call.respond(HttpStatusCode.OK, "OK")
+        }
+
+//        get("/status/permit"){
+//            try{
+//                val count = fishingPermitManager.getValidPermits().size
+//                call.respond(HttpStatusCode.OK, "")
+//            }catch (e: Exception){
+//                call.respond(HttpStatusCode.InternalServerError, "FA")
+//            }catch(sqe: SQLSyntaxErrorException){
+//                call.respond(HttpStatusCode.InternalServerError, "FA")
+//            }
+//        }
+
+        get("/status/license"){
+            try{
+                call.respond(HttpStatusCode.OK, licenseManager.listLicenses().count())
+            }catch (e: Exception){
+                call.respond(HttpStatusCode.InternalServerError, "FA")
+            }catch(sqe: SQLSyntaxErrorException){
+                call.respond(HttpStatusCode.InternalServerError, "FA")
+            }
+        }
+
+//        get("/status/news"){
+//            try{
+//                val count = newsManager.getAllNews().size
+//                call.respond(HttpStatusCode.OK, "")
+//            }catch (e: Exception){
+//                call.respond(HttpStatusCode.InternalServerError, "FA")
+//            }catch(sqe: SQLSyntaxErrorException){
+//                call.respond(HttpStatusCode.InternalServerError, "FA")
+//            }
+//        }
+
+        get("/status/user"){
+            try{
+                call.respond(HttpStatusCode.OK, userManager.listUsers().size)
+            }catch (e: Exception){
+                call.respond(HttpStatusCode.InternalServerError, "FA")
+            }catch(sqe: SQLSyntaxErrorException){
+                call.respond(HttpStatusCode.InternalServerError, "FA")
+            }
+        }
+
+
+
+
+
         post("/login") {
             val loginJson = call.receive<LoginJson>()
             try {
@@ -374,10 +426,10 @@ fun Application.module() {
                 call.respond(HttpStatusCode.OK, permitManager.getPermitsByUser(userId))
             } catch (e: UserException) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
-            } catch (e: Exception) {
-                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
-            }
-        }
+           } catch (e: Exception) {
+               call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+           }
+       }
     }
 }
 

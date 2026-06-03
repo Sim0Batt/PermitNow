@@ -15,12 +15,13 @@ export const ServerStatus = () => {
         setGeneralStatus('FA');
       }
 
-      const permitRsponse = await apiClient.get('/status/permit');
-      if (permitRsponse.data != 'FA') {
-        setPermitStatus('OK');
-      } else {
-        setPermitStatus('FA');
-      }
+      // const permitRsponse = await apiClient.get('/status/permit');
+      // if (permitRsponse.data != 'FA') {
+      //   setPermitStatus('OK');
+      // } else {
+      //   setPermitStatus('FA');
+      // }
+      setPermitStatus("FA")
 
       const licenceResponse = await apiClient.get('/status/license');
       if (licenceResponse.data != 'FA') {
@@ -29,12 +30,14 @@ export const ServerStatus = () => {
         setLicenceStatus('FA');
       }
 
-      const newsResponse = await apiClient.get('/status/news');
-      if (newsResponse.data != 'FA') {
-        setNewsStatus('OK');
-      } else {
-        setNewsStatus('FA');
-      }
+      // const newsResponse = await apiClient.get('/status/news');
+      // if (newsResponse.data != 'FA') {
+      //   setNewsStatus('OK');
+      // } else {
+      //   setNewsStatus('FA');
+      // }
+    setNewsStatus("FA")
+
     };
 
     fetchStatuses();

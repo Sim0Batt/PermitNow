@@ -25,6 +25,8 @@ class UserDocument (
     "surname": "$surname",
     "email": "$email",
     "role": "$role",
+    "fiscalCode": "$fiscalCode",
+    "password": "$password",
     "verified": $verified,
     "deleted": $deleted,
     "fishingLicense": $fishingLicense

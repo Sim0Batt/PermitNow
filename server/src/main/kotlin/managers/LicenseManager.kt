@@ -22,6 +22,7 @@ import java.util.logging.Logger
 class LicenseManager(val connection: DatabaseConfig, val permitNowConfiguration: PermitNowConfiguration, val licenseRecognition: LicenseRecognition) {
     val userCollection = connection.userCollection
     val licenseCollection = connection.fishingCollection
+    val booksManager = BooksManager(connection, permitNowConfiguration)
 
     val logger = Logger.getLogger(this::class.java.name)
 
@@ -48,6 +49,7 @@ class LicenseManager(val connection: DatabaseConfig, val permitNowConfiguration:
 
             licenseCollection.insertOne(fishingDocument)
             userCollection.updateOneById(ObjectId(userId), setValue(UserDocument::fishingLicense, fishingDocument))
+            booksManager.createNewPage(fishingDocument.bookCode)
 
             logger.info("Fishing Licence Added to: ${user.email}")
         }catch (e: Exception){
@@ -233,6 +235,4 @@ class LicenseManager(val connection: DatabaseConfig, val permitNowConfiguration:
             throw UserException(e.message.toString())
         }
     }
-
-
 }

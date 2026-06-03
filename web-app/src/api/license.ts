@@ -2,6 +2,7 @@ import { apiClient } from './client';
 import type {
   LicenseListItem,
   FishingLicense,
+  FishingLicenseInfoJson,
   CreateLicensePayload,
   UpdateLicensePayload,
 } from '../types/models';
@@ -15,6 +16,14 @@ export const licenseApi = {
   async getLicense(userId: string): Promise<FishingLicense> {
     const response = await apiClient.get<FishingLicense>(`/license/fishing/${userId}`);
     return response.data;
+  },
+
+  async getUserLicense(userId: string): Promise<FishingLicenseInfoJson> {
+    const response = await apiClient.get<FishingLicense>(`/license/fishing/${userId}`);
+    return {
+      id: userId,
+      ...response.data,
+    };
   },
 
   async createLicense(payload: CreateLicensePayload): Promise<void> {

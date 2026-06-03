@@ -1,9 +1,14 @@
 import type { LoginJson, RegisterJson } from '../types/models';
 import { apiClient } from './client';
 
+export interface LoginResponse {
+  userId: string;
+  verified: boolean;
+}
+
 export const authApi = {
-  async login(credentials: LoginJson): Promise<string> {
-    const response = await apiClient.post<string>('/login', credentials);
+  async login(credentials: LoginJson): Promise<LoginResponse | string> {
+    const response = await apiClient.post<LoginResponse | string>('/login', credentials);
     return response.data;
   },
 
