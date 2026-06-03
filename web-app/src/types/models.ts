@@ -92,6 +92,31 @@ export interface CreateLicensePayload {
   expirationDate: string;
 }
 
+export interface FishingPage {
+  id: string;
+  bookId: string;
+  date: string;
+}
+
+export interface FishingRow {
+  id: string;
+  pageId: string;
+  fishName: string;
+  zone: string;
+  specie: string;
+  measure: number;
+}
+
+export interface CreateFishingRowPayload {
+  id: string;
+  pageId: string;
+  fishName: string;
+  date: string;
+  zone: string;
+  specie: string;
+  measure: number;
+}
+
 export interface UpdateLicensePayload {
   licenseNumber: string;
   releasedBy: string;
