@@ -128,6 +128,23 @@ class PermitManager(val connection: DatabaseConfig, val permitNowConfiguration: 
         }
     }
 
+    suspend fun deletePermit(permitId: String){
+        try {
+            permitCollection.deleteOne(FishingPermitDocument::_id eq ObjectId(permitId))
+        }catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    suspend fun clear(){
+        try {
+            permitCollection.deleteMany(FishingPermitDocument::status eq "EXPIRED")
+        }catch (e: Exception) {
+            e.printStackTrace()
+            throw UserException(e.message.toString())
+        }
+    }
+
     private fun parseStartDate(value: String): LocalDate {
         if (value.isBlank()) throw UserException("Start date cannot be blank")
         return try {
