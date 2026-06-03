@@ -1,6 +1,6 @@
 # PermitNow
 
-PermitNow è un sistema integrato per la gestione digitale delle licenze di pesca e dei relativi permessi[cite: 3]. Il progetto mira a digitalizzare e semplificare l'emissione, il controllo e la registrazione delle catture, sostituendo i tradizionali libretti cartacei con un'infrastruttura cloud moderna.
+PermitNow è un sistema alternativo all'attuale forma di gestione dei servizi di caccia, pesca e attività boschifera. È definito da una applicazione mobile e una web application per tutti i servizi richiesti. PermitNow offre anche una dashboard di sistema (admin) da fornire agli enti adatti secondo una gestione Multi-Tenant.
 
 ## Struttura del Progetto
 
@@ -15,7 +15,7 @@ Il sistema è diviso in tre macro-componenti principali, contenuti nelle rispett
 
 ## Documentazione API
 
-La documentazione completa delle API RESTful è scritta in formato API Blueprint ed è consultabile nel file `apiary.apib` situato nella root del progetto. Può essere importata su Apiary per generare mock server e interfacce grafiche interattive.
+La documentazione completa delle API RESTful è scritta in formato API Blueprint ed è consultabile nel file `apiary.apib` situato nella root del progetto, visualizzabile al link [here](https://permitnow.docs.apiary.io/#).
 
 ## Gruppo
 
