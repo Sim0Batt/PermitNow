@@ -430,6 +430,25 @@ fun Application.module() {
                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
            }
        }
+
+        delete("/permit/fishing/{permitId}") {
+            try {
+                permitManager.deletePermit(call.parameters["permitId"]!!)
+            }catch (e: Exception){
+                e.printStackTrace()
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
+
+        delete("/permit/clear"){
+            try {
+                permitManager.clear()
+                call.respond(HttpStatusCode.OK, mapOf("message" to "Expired permits cleared successfully"))
+            }catch (e: Exception){
+                e.printStackTrace()
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
     }
 }
 
