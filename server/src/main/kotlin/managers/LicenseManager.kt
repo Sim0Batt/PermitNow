@@ -114,4 +114,26 @@ class LicenseManager(val connection: DatabaseConfig, val permitNowConfiguration:
     }
 
 
+    suspend fun listLicenses(): List<FishingLicenseInfoJson>{
+        try {
+            return licenseCollection.find().toList().map {
+                FishingLicenseInfoJson(
+                    it._id.toString(),
+                    it.qrCodeToken,
+                    it.status,
+                    it.licenseNumber,
+                    it.releasedBy,
+                    it.season,
+                    it.noKill,
+                    it.bookCode,
+                    it.expirationDate
+                )
+            }
+        }catch (e: Exception){
+            e.printStackTrace()
+            throw FishingLicenseException("Error listing licenses: " + e.message.toString())
+        }
+    }
+
+
 }

@@ -10,7 +10,7 @@ class FishingBookRowDocument (
     @Contextual val _id: ObjectId = ObjectId.get(),
     val pageId: String,
     val fishName: String,
-    val date: LocalDate,
+    val date: String,
     val zone: String,
     val specie: String,
     val measure: Double

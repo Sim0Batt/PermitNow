@@ -8,12 +8,12 @@ export const ServerNumbers = () => {
   const [userStatus, setUserStatus] = useState('FA');
   useEffect(() => {
     const fetchStatuses = async () => {
-      const permitResponse = await apiClient.get('/status/permit');
-      if (permitResponse.data != 'FA') {
-        setPermitStatus(permitResponse.data);
-      } else {
-        setPermitStatus('FA');
-      }
+      // const permitResponse = await apiClient.get('/status/permit');
+      // if (permitResponse.data != 'FA') {
+      //   setPermitStatus(permitResponse.data);
+      // } else {
+      //   setPermitStatus('FA');
+      // }
 
       const licenceResponse = await apiClient.get('/status/license');
       if (licenceResponse.data != 'FA') {
@@ -22,12 +22,12 @@ export const ServerNumbers = () => {
         setLicenceStatus('FA');
       }
 
-      const newsResponse = await apiClient.get('/status/news');
-      if (newsResponse.data != 'FA') {
-        setNewsStatus(newsResponse.data);
-      } else {
-        setNewsStatus('FA');
-      }
+      // const newsResponse = await apiClient.get('/status/news');
+      // if (newsResponse.data != 'FA') {
+      //   setNewsStatus(newsResponse.data);
+      // } else {
+      //   setNewsStatus('FA');
+      // }
 
       const userResponse = await apiClient.get('/status/user');
       if (userResponse.data != 'FA') {

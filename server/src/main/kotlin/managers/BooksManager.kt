@@ -33,7 +33,7 @@ class BooksManager(val connection: DatabaseConfig, val permitNowConfiguration: P
                 FishingBookRowDocument(
                     pageId = pageId,
                     fishName = fishingRow.fishName,
-                    date = LocalDate.parse(fishingRow.date),
+                    date = fishingRow.date,
                     zone = fishingRow.zone,
                     specie = fishingRow.specie,
                     measure = fishingRow.measure,

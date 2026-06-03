@@ -10,6 +10,11 @@ import type { FishingLicenseInfoJson } from '../types/models';
 const BRAND = '#1D9E75';
 const BRAND_DARK = '#178a64';
 
+function parseDDMMYYYY(dateStr: string): Date {
+  const [day, month, year] = dateStr.split('/').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 export function LicenseDetailPage() {
   const { userId } = useAuth();
   const { id } = useParams<{ id: string }>();
@@ -37,27 +42,30 @@ export function LicenseDetailPage() {
       .finally(() => setLoading(false));
   }, [userId, id]);
 
-  const expired = license ? new Date(license.expirationDate) < new Date() : false;
+  console.log(license)
+
+  const expirationDate = license ? parseDDMMYYYY(license.expirationDate) : null;
+  const expired = expirationDate ? expirationDate < new Date() : false;
 
   const statusLabel = license
-    ? license.status === 'active' && !expired
+    ? license.status === 'ACTIVE' && !expired
       ? 'Attiva'
-      : license.status === 'expired' || expired
+      : license.status === 'EXPIRED' || expired
         ? 'Scaduta'
-        : license.status === 'pending'
+        : license.status === 'PENDING'
           ? 'In attesa'
           : license.status
     : '';
 
   const statusColor =
-    license?.status === 'active' && !expired
+    license?.status === 'ACTIVE' && !expired
       ? 'bg-emerald-100 text-emerald-700'
-      : license?.status === 'pending'
+      : license?.status === 'PENDING'
         ? 'bg-yellow-100 text-yellow-700'
         : 'bg-red-100 text-red-700';
 
-  const formattedExpiry = license
-    ? new Date(license.expirationDate).toLocaleDateString('it-IT', {
+  const formattedExpiry = expirationDate
+    ? expirationDate.toLocaleDateString('it-IT', {
         day: '2-digit',
         month: 'long',
         year: 'numeric',
