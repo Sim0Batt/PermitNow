@@ -17,6 +17,7 @@ import io.ktor.server.routing.*
 import kotlinx.serialization.json.Json
 import java.io.File
 import exceptions.UserException
+import managers.BooksManager
 import managers.LicenseManager
 import managers.PermitManager
 import managers.UserManager
@@ -26,6 +27,7 @@ import server.models.input.FishingPermitRequestJson
 import server.models.input.UpdateFishingLicenseJson
 import script.LicenseRecognition
 import server.models.input.ChangePasswordJson
+import server.models.input.FishingRowJson
 import server.models.input.ProfileUpdateJson
 import server.models.input.LoginJson
 import server.models.input.RegisterJson
@@ -71,6 +73,7 @@ fun Application.module() {
     val licenseRecognition = LicenseRecognition(permitNowConfiguration, userManager)
     val licenseManager = LicenseManager(connection, permitNowConfiguration, licenseRecognition)
     val permitManager = PermitManager(connection, permitNowConfiguration)
+    val bookManager = BooksManager(connection, permitNowConfiguration)
 
     // Routes
     routing {
@@ -378,6 +381,83 @@ fun Application.module() {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
             }
         }
+
+
+        post("/page/{userId}"){
+            try{
+                val userId = call.parameters["userId"]
+                if (userId == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing userId parameter"))
+                    return@post
+                }
+                bookManager.createNewPage(userId)
+                call.respond(HttpStatusCode.OK)
+            } catch (e: Exception){
+                if(e.message!!.contains("Book already has a page for today")){
+                    call.respond(HttpStatusCode.Conflict, mapOf("error" to e.message))
+                }
+                e.printStackTrace()
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
+
+        post("/row/{pageId}"){
+            val input = call.receive<FishingRowJson>()
+            try{
+                val pageId = call.parameters["pageId"]
+                if (pageId == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing pageId parameter"))
+                    return@post
+                }
+                bookManager.addRowToPage(pageId, input)
+                call.respond(HttpStatusCode.OK)
+            }catch (e: Exception){
+                e.printStackTrace()
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
+
+        get("/page/{bookId}"){
+            try {
+                val bookId = call.parameters["bookId"]
+                call.respond(bookManager.getPagesForBook(bookId!!))
+            }catch (e: Exception){
+                e.printStackTrace()
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
+
+        get("/row/{pageId}"){
+            try {
+                val pageId = call.parameters["pageId"]
+                call.respond(bookManager.getRowsForPage(pageId!!))
+            }catch (e: Exception){
+                e.printStackTrace()
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
+
+        delete("/page/{pageId}"){
+            try{
+                val pageId = call.parameters["pageId"]
+                bookManager.deletePage(pageId!!)
+            }catch (e: Exception){
+                e.printStackTrace()
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
+
+        delete("/row/{rowId}"){
+            try{
+                val rowId = call.parameters["rowId"]
+                bookManager.deleteRow(rowId!!)
+            }catch (e: Exception) {
+                e.printStackTrace()
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
+
+
 
 
         // FISHING PERMIT

@@ -1,19 +1,17 @@
-package database.documents
+package server.models.output
 
-import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
-import org.bson.types.ObjectId
 
 @Serializable
-class FishingPageDocument(
-    @Contextual val _id: ObjectId = ObjectId.get(),
+class FishingPageInfoJson(
+    val id: String,
     val bookId: String,
     val date: String,
 ) {
     override fun toString(): String {
         return """
 {
-    "_id": "$_id",
+    "id": "$id",
     "bookId": "$bookId",
     "date": "$date"
 }

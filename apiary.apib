@@ -5,23 +5,20 @@ HOST: https://polls.apiblueprint.org/
 
 Documentazione delle API RESTful per il backend di PermitNow.
 
-## Group Gestione Utenti 
+# Group Gestione Utenti
 Endpoint dedicati alla gestione degli utenti sui servizi PermitNow.
 
-### Register [POST /register]
+## Registrazione [/register]
+
+### Register [POST]
 Permette la registrazione di un utente sul sistema PermitNow.
-+ Request (application/JSON)
-    + Attributes
-        + email: email con cui l'utente si vuole registrare sul sistema. (string, required)
-        + password: password con cui l'utente si vuole registrare sul sistema. (string, required)
-        + name: nome dell'utente che si vuole registrare. (string, required)
-        + surname: cognome dell'utente che si vuole registrare. (string, required)
-        + fiscalCode: codice fiscale dell'utente che si vuole registrare. (string, required)
+
++ Request (application/json)
+    + Attributes (RegisterJson)
         
 + Response 200 (application/json)
-
     + Attributes
-        + userId: L'ID del nuovo utente creato
+        + userId: `6a020410abe0a8034525a54c` (string) - L'ID del nuovo utente creato
 
 + Response 409 (application/json)
     + Body
@@ -37,17 +34,18 @@ Permette la registrazione di un utente sul sistema PermitNow.
                 "error": "Invalid Registration Data"
             }
             
-            
-### Login [POST /login]
-Permette il login di un utente sul sistema PermitNow.
-+ Request (application/JSON)
-    + Attributes
-        + email: email con cui l'utente si è registrato sul sistema.
-        + password: password con cui l'utente si è registrato sul sistema.
-+ Response 200 (application/json)
 
+## Accesso [/login]
+
+### Login [POST]
+Permette il login di un utente sul sistema PermitNow.
+
++ Request (application/json)
+    + Attributes (LoginJson)
+
++ Response 200 (application/json)
     + Attributes
-        + userId: L'ID univoco dell'utente generato da MongoDB
+        + userId: `6a020410abe0a8034525a54c` (string) - L'ID univoco dell'utente generato da MongoDB
 
 + Response 400 (application/json)
     + Body
@@ -64,12 +62,13 @@ Permette il login di un utente sul sistema PermitNow.
             }
             
 
-
-### Aggiorna Profilo [PUT /users/{userId}]
-Aggiorna i dati anagrafici di base dell'utente.
+## Profilo Utente [/users/{userId}]
 
 + Parameters
     + userId: `6a020410abe0a8034525a54c` (string, required) - L'ObjectId di MongoDB dell'utente.
+
+### Aggiorna Profilo [PUT]
+Aggiorna i dati anagrafici di base dell'utente.
 
 + Request (application/json)
     + Attributes (ProfileUpdateJson)
@@ -96,11 +95,13 @@ Aggiorna i dati anagrafici di base dell'utente.
             }
 
 
-### Cambia Password [POST /users/{userId}/password]
-Permette all'utente di cambiare la propria password sul sistema, previa verifica di quella attuale.
+## Sicurezza Utente [/users/{userId}/password]
 
 + Parameters
-    + userId: L'ObjectId di MongoDB dell'utente.
+    + userId: `6a020410abe0a8034525a54c` (string, required) - L'ObjectId di MongoDB dell'utente.
+
+### Cambia Password [POST]
+Permette all'utente di cambiare la propria password sul sistema, previa verifica di quella attuale.
 
 + Request (application/json)
     + Attributes (ChangePasswordJson)
@@ -127,27 +128,200 @@ Permette all'utente di cambiare la propria password sul sistema, previa verifica
             }
             
 
+# Group Gestione Licenze
+Endpoint dedicati alla lettura, creazione e modifica delle licenze di pesca per gli utenti.
+
+## Lista Completa Licenze (Admin) [/license/list]
+
+### Ottieni Tutte le Licenze [GET]
+Restituisce una lista completa di tutte le licenze attive nel sistema, includendo i dati anagrafici dell'utente collegato. Richiede privilegi di Amministratore.
+
++ Response 200 (application/json)
+    + Attributes (array[LicenseListItemResponse])
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "error": "Error retrieving licenses"
+            }
+
+
+## Scansione Licenza tramite Foto [/license/fishing]
+
+### Carica Foto Licenza [POST]
+Permette di creare una licenza caricando una foto. Il backend utilizzerà l'AI per leggere il documento (OCR) e associare la licenza all'utente.
+
++ Request (multipart/form-data; boundary=---BOUNDARY)
+    Questo endpoint utilizza `multipart/form-data`.
+    
+    + Body
+
+            -----BOUNDARY
+            Content-Disposition: form-data; name="userId"
+
+            6a020410abe0a8034525a54c
+            -----BOUNDARY
+            Content-Disposition: form-data; name="image"; filename="licenza.jpg"
+            Content-Type: image/jpeg
+
+            (binary data)
+            -----BOUNDARY--
+
++ Response 200 (text/plain)
+    + Body
+
+            License added successfully
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "error": "Missing userId or image file"
+            }
+
+
+## Creazione Manuale Licenza (Admin) [/license/fishing/admin]
+
+### Crea Licenza Manualmente [POST]
+Permette a un amministratore di creare manualmente una licenza per un utente senza passare per la scansione OCR.
+
++ Request (application/json)
+    + Attributes (AdminCreateLicenseRequest)
+
++ Response 201 (application/json)
+    + Body
+
+            {
+                "message": "License created successfully"
+            }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "error": "User id cannot be blank"
+            }
+
+
+## Licenza Singola Utente [/license/fishing/{userId}]
+
++ Parameters
+    + userId: `6a020410abe0a8034525a54c` (string, required) - L'ObjectId dell'utente a cui appartiene la licenza.
+
+### Ottieni Licenza [GET]
+Restituisce i dettagli della licenza di pesca di un utente specifico.
+
++ Response 200 (application/json)
+    + Attributes (FishingLicenseResponse)
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "error": "License not found"
+            }
+
+### Aggiorna Licenza [PUT]
+Aggiorna i dati di una licenza esistente. Richiede i permessi di Amministratore.
+
++ Request (application/json)
+    + Attributes (UpdateLicenseRequest)
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "message": "License updated successfully"
+            }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "error": "Cannot update a deleted license"
+            }
+
+### Elimina Licenza [DELETE]
+Effettua un "soft-delete" o rimozione della licenza dal profilo dell'utente.
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "message": "License deleted successfully"
+            }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "error": "License already deleted"
+            }
 
 
 # Data Structures
 
 ## LoginJson (object)
-+ email: `` (string, required)
-+ password: `` (string, required)
++ email: `mario.rossi@email.com` (string, required)
++ password: `password123` (string, required)
 
 ## RegisterJson (object)
-+ name: `` (string, required)
-+ surname: `` (string, required)
-+ email: `` (string, required)
-+ password: `` (string, required)
-+ fiscalCode: `` (string, required)
++ name: `Mario` (string, required)
++ surname: `Rossi` (string, required)
++ email: `mario.rossi@email.com` (string, required)
++ password: `password123` (string, required)
++ fiscalCode: `RSSMRA80A01H501V` (string, required)
++ role: `user` (string, required)
++ verified: true (boolean, required)
 
 ## ProfileUpdateJson (object)
-+ name: `` (string, required)
-+ surname: `` (string, required)
-+ email: `` (string, required)
-+ fiscalCode: `` (string, required)
++ name: `Mario` (string, required)
++ surname: `Rossi` (string, required)
++ email: `mario.rossi.nuovo@email.com` (string, required)
++ fiscalCode: `RSSMRA80A01H501V` (string, required)
 
 ## ChangePasswordJson (object)
-+ currentPassword: `` (string, required)
-+ newPassword: `` (string, required)
++ currentPassword: `vecchiaPassword1` (string, required)
++ newPassword: `nuovaPassword2` (string, required)
+
+## AdminCreateLicenseRequest (object)
++ userId: `6a020410abe0a8034525a54c` (string, required)
++ licenseNumber: `TN-2026-00123` (string, required)
++ releasedBy: `Associazione Pescatori Trentini` (string, required)
++ season: `2026` (string, required)
++ noKill: true (boolean, required)
++ bookCode: `LIB-9945` (string, required)
++ expirationDate: `2026-12-31` (string, required)
+
+## UpdateLicenseRequest (object)
++ licenseNumber: `TN-2026-00123` (string, required)
++ releasedBy: `Associazione Pescatori Trentini` (string, required)
++ season: `2026` (string, required)
++ noKill: true (boolean, required)
++ bookCode: `LIB-9945` (string, required)
++ expirationDate: `2026-12-31` (string, required)
+
+## FishingLicenseResponse (object)
++ qrCodeToken: `abcd-1234-efgh-5678` (string, required)
++ status: `VALID` (string, required)
++ licenseNumber: `TN-2026-00123` (string, required)
++ releasedBy: `Associazione Pescatori Trentini` (string, required)
++ season: `2026` (string, required)
++ noKill: true (boolean, required)
++ bookCode: `LIB-9945` (string, required)
++ expirationDate: `2026-12-31` (string, required)
+
+## LicenseListItemResponse (object)
++ userId: `6a020410abe0a8034525a54c` (string, required)
++ name: `Mario` (string, required)
++ surname: `Rossi` (string, required)
++ email: `mario.rossi@email.com` (string, required)
++ qrCodeToken: `abcd-1234-efgh-5678` (string, required)
++ status: `VALID` (string, required)
++ licenseNumber: `TN-2026-00123` (string, required)
++ releasedBy: `Associazione Pescatori Trentini` (string, required)
++ season: `2026` (string, required)
++ noKill: true (boolean, required)
++ bookCode: `LIB-9945` (string, required)
++ expirationDate: `2026-12-31` (string, required)
