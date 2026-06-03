@@ -15,7 +15,7 @@ Il sistema è diviso in tre macro-componenti principali, contenuti nelle rispett
 
 ## Documentazione API
 
-La documentazione completa delle API RESTful è scritta in formato API Blueprint ed è consultabile nel file `apiary.apib` situato nella root del progetto, visualizzabile al link [here](https://permitnow.docs.apiary.io/#).
+La documentazione completa delle API RESTful è scritta in formato API Blueprint ed è consultabile nel file `apiary.apib` situato nella root del progetto, visualizzabile al link [qui](https://permitnow.docs.apiary.io/#).
 
 ## Gruppo
 
