@@ -14,7 +14,6 @@ class DatabaseConfig(val connectionUrl: String, val dbName: String) {
     val database = client.getDatabase(dbName)
 
     val userCollection = database.getCollection<UserDocument>("users")
-    val fishingCollection = database.getCollection<FishingLicenseDocument>("fishing_licenses")
     val fishingPagesCollection = database.getCollection<FishingPageDocument>("fishing_pages")
     val fishingRowsCollection = database.getCollection<FishingBookRowDocument>("fishing_rows")
     val fishingPermitCollection = database.getCollection<FishingPermitDocument>("fishing_permits")

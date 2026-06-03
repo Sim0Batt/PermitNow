@@ -8,12 +8,14 @@ import org.bson.types.ObjectId
 class FishingPageDocument(
     @Contextual val _id: ObjectId = ObjectId.get(),
     val bookId: String,
+    val date: String,
 ) {
     override fun toString(): String {
         return """
 {
-"_id": "$_id",
-"bookId": "$bookId"
+    "_id": "$_id",
+    "bookId": "$bookId",
+    "date": "$date"
 }
         """.trimIndent()
     }
