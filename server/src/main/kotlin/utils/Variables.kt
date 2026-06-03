@@ -1,8 +1,9 @@
 package utils
 
-const val xmlPath = "YOUR_SETTINGS_PATH"
-const val imagePath = "YOUR_IMAGE_PATH"
+const val xmlPath = "C:\\Users\\sbattisti\\tmp\\PermitNow\\settings.xml"
+const val imagePath = "C:\\Users\\sbattisti\\tmp\\PermitNow\\images\\"
 
+val fishes = listOf("Trota fario","Trota marmorata","Ibrido di trota (marmorata x fario)","Trota iridea","Salmerino alpino","Salmerino fontinalis","Coregone (Lavarello)","Temolo","Luccio","Pesce persico","Carpa","Tinca","Anguilla","Cavedano","Scardola","Alborella","Barbo","Cagnetta","Luccioperca (Sandra)","Persico trota (Black bass)")
 
 
 const val FISHING_SYSTEM_PROMPT = """
