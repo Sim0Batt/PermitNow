@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { AxiosError } from 'axios';
 import { authApi } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
@@ -21,6 +21,9 @@ export const LoginPage = () => {
 
   const { loginUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Set by RegisterPage after a successful sign-up
+  const justRegistered = (location.state as { registered?: boolean } | null)?.registered ?? false;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -63,6 +66,12 @@ export const LoginPage = () => {
           <p className="mt-2 text-sm text-gray-600">
             Entra per gestire licenze e permessi dal tuo wallet digitale.
           </p>
+
+          {justRegistered && (
+            <div className="mt-6 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+              Registrazione completata, accedi ora.
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
