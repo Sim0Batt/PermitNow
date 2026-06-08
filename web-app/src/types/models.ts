@@ -8,6 +8,7 @@ export interface RegisterJson {
   surname: string;
   email: string;
   password: string;
+  fiscalCode: string;
   role: string;
 }
 

@@ -5,7 +5,7 @@ import { LicencePage } from './pages/LicencePage';
 import { LicenseDetailPage } from './pages/LicenseDetailPage';
 import { FishingBookPage } from './pages/FishingBookPage';
 import { PermitsPage } from './pages/PermitsPage';
-import { RegisterPlaceholderPage } from './pages/RegisterPage';
+import { RegisterPage } from './pages/RegisterPage';
 import DashboardHomePage from './dashboard/DashboardHomePage';
 import { DashboardLoginPage } from './dashboard/pages/DashboardLoginPage';
 import { UserManagementPage } from './dashboard/pages/user/UserManagementPage';
@@ -27,14 +27,13 @@ const router = createBrowserRouter([
     path: '/',
     element: <HomePage />,
   },
-  // TODO(auth): replace with real login/register pages (issues #43, #44)
   {
     path: '/login',
     element: <LoginPage />,
   },
   {
     path: '/register',
-    element: <RegisterPlaceholderPage />,
+    element: <RegisterPage />,
   },
   {
     element: <RequireAuth role="user" />,
