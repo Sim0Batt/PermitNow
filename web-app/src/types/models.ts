@@ -89,3 +89,29 @@ export interface UpdateLicensePayload {
   bookCode: string;
   expirationDate: string;
 }
+
+export interface FishingPermit {
+  permitId: string;
+  userId: string;
+  licenseId: string;
+  zone: string;
+  type: string;
+  noKill: boolean;
+  startDate: string;
+  endDate: string;
+  numberOfRods: number;
+  maxCatch: number;
+  price: number;
+  status: string;
+  qrCodeToken: string;
+}
+
+export interface PermitRequestPayload {
+  userId: string;
+  zone: string;
+  type: string;
+  noKill: boolean;
+  startDate: string;
+  numberOfRods: number;
+  maxCatch: number;
+}

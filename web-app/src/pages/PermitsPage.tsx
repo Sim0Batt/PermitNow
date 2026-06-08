@@ -1,46 +1,337 @@
+import { useState, useEffect, type FormEvent } from 'react';
 import { NavBar } from '../components/NavBar';
 import { SpidLock } from '../components/SpidLock';
+import { useAuth } from '../context/AuthContext';
+import { permitsApi } from '../api/permits';
+import type { FishingPermit, PermitRequestPayload } from '../types/models';
 
 const BRAND = '#1D9E75';
 
+const ZONES: { value: string; label: string }[] = [
+  { value: 'ALTO_SARCA', label: 'Alto Sarca' },
+  { value: 'BASSO_SARCA', label: 'Basso Sarca' },
+  { value: 'VAL_DI_NON', label: 'Val di Non' },
+  { value: 'VALSUGANA', label: 'Valsugana' },
+  { value: 'ALTO_CHIESE', label: 'Alto Chiese' },
+  { value: 'LAGO_DI_GARDA', label: 'Lago di Garda' },
+  { value: 'LAGO_DI_TOVEL', label: 'Lago di Tovel' },
+  { value: 'LAGO_DI_SANTA_GIUSTINA', label: 'Lago di Santa Giustina' },
+  { value: 'LAGO_DI_LEDRO', label: 'Lago di Ledro' },
+  { value: 'LAGO_DI_CAVEDINE', label: 'Lago di Cavedine' },
+  { value: 'FIUME_ADIGE', label: 'Fiume Adige' },
+  { value: 'FIUME_BRENTA', label: 'Fiume Brenta' },
+  { value: 'ALTO_ADIGE_BOLZANO', label: 'Alto Adige / Bolzano' },
+  { value: 'VAL_PUSTERIA', label: 'Val Pusteria' },
+  { value: 'VAL_GARDENA', label: 'Val Gardena' },
+];
+
+const PERMIT_TYPES: { value: string; label: string; price: number }[] = [
+  { value: 'GIORNALIERO', label: 'Giornaliero', price: 23 },
+  { value: 'SETTIMANALE', label: 'Settimanale', price: 80 },
+  { value: 'ANNUALE', label: 'Annuale', price: 160 },
+];
+
+interface FormState {
+  zone: string;
+  type: string;
+  startDate: string;
+  numberOfRods: number;
+  noKill: boolean;
+  maxCatch: number;
+}
+
+const DEFAULT_FORM: FormState = {
+  zone: ZONES[0].value,
+  type: PERMIT_TYPES[0].value,
+  startDate: '',
+  numberOfRods: 1,
+  noKill: false,
+  maxCatch: 0,
+};
+
 export function PermitsPage() {
+  const { userId } = useAuth();
+  const [permits, setPermits] = useState<FishingPermit[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState<FormState>(DEFAULT_FORM);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const fetchPermits = async () => {
+    if (!userId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await permitsApi.getPermitsByUser(userId);
+      setPermits(data);
+    } catch {
+      setError('Impossibile caricare i permessi. Riprova più tardi.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void fetchPermits();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!userId) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const payload: PermitRequestPayload = {
+        userId,
+        zone: form.zone,
+        type: form.type,
+        noKill: form.noKill,
+        startDate: form.startDate,
+        numberOfRods: form.numberOfRods,
+        maxCatch: form.noKill ? 0 : form.maxCatch,
+      };
+      await permitsApi.requestPermit(payload);
+      setForm(DEFAULT_FORM);
+      await fetchPermits();
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error ?? 'Richiesta non riuscita. Controlla i dati e riprova.';
+      setSubmitError(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-white text-gray-900">
       <NavBar />
       <SpidLock pageName="Permessi">
-        <main className="flex flex-1 flex-col items-center justify-center px-4 py-20 text-center">
-          <div
-            className="flex h-16 w-16 items-center justify-center rounded-2xl"
-            style={{ backgroundColor: `${BRAND}1A`, color: BRAND }}
-          >
-            <TicketIcon />
-          </div>
-          <h1 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
+        <main className="mx-auto w-full max-w-3xl px-4 py-10">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
             I tuoi permessi
           </h1>
-          <p className="mt-3 max-w-md text-gray-600">
-            Richiedi e consulta i permessi attivi nella tua area.
-          </p>
+
+          {/* Request form */}
+          <section className="mt-8 rounded-2xl border border-gray-200 bg-gray-50 p-6">
+            <h2 className="mb-5 text-lg font-semibold text-gray-900">
+              Richiedi permesso
+            </h2>
+            <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">
+                  Zona
+                </label>
+                <select
+                  value={form.zone}
+                  onChange={e =>
+                    setForm(f => ({ ...f, zone: e.target.value }))
+                  }
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D9E75]"
+                  required
+                >
+                  {ZONES.map(z => (
+                    <option key={z.value} value={z.value}>
+                      {z.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">
+                  Tipo
+                </label>
+                <select
+                  value={form.type}
+                  onChange={e =>
+                    setForm(f => ({ ...f, type: e.target.value }))
+                  }
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D9E75]"
+                  required
+                >
+                  {PERMIT_TYPES.map(t => (
+                    <option key={t.value} value={t.value}>
+                      {t.label} — {t.price}€
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">
+                  Data inizio
+                </label>
+                <input
+                  type="date"
+                  value={form.startDate}
+                  onChange={e =>
+                    setForm(f => ({ ...f, startDate: e.target.value }))
+                  }
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D9E75]"
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">
+                  Numero di canne
+                </label>
+                <select
+                  value={form.numberOfRods}
+                  onChange={e =>
+                    setForm(f => ({ ...f, numberOfRods: Number(e.target.value) }))
+                  }
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D9E75]"
+                  required
+                >
+                  <option value={1}>1 canna</option>
+                  <option value={2}>2 canne</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2 sm:col-span-2">
+                <input
+                  id="noKill"
+                  type="checkbox"
+                  checked={form.noKill}
+                  onChange={e =>
+                    setForm(f => ({
+                      ...f,
+                      noKill: e.target.checked,
+                      maxCatch: e.target.checked ? 0 : f.maxCatch,
+                    }))
+                  }
+                  className="h-4 w-4 rounded border-gray-300 accent-[#1D9E75]"
+                />
+                <label
+                  htmlFor="noKill"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  No-kill (rilascio obbligatorio)
+                </label>
+              </div>
+
+              {!form.noKill && (
+                <div className="flex flex-col gap-1 sm:col-span-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Cattura massima (kg)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={form.maxCatch}
+                    onChange={e =>
+                      setForm(f => ({ ...f, maxCatch: Number(e.target.value) }))
+                    }
+                    className="w-40 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D9E75]"
+                    required
+                  />
+                </div>
+              )}
+
+              {submitError && (
+                <p className="text-sm text-red-600 sm:col-span-2">
+                  {submitError}
+                </p>
+              )}
+
+              <div className="sm:col-span-2">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="rounded-lg bg-[#1D9E75] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#178a64] disabled:opacity-50"
+                >
+                  {submitting ? 'Invio in corso…' : 'Richiedi permesso'}
+                </button>
+              </div>
+            </form>
+          </section>
+
+          {/* Permit list */}
+          <section className="mt-10">
+            <h2 className="mb-4 text-lg font-semibold text-gray-900">
+              Permessi emessi
+            </h2>
+            {loading ? (
+              <p className="text-sm text-gray-500">Caricamento in corso…</p>
+            ) : error ? (
+              <p className="text-sm text-red-600">{error}</p>
+            ) : permits.length === 0 ? (
+              <p className="text-sm text-gray-500">
+                Nessun permesso trovato. Richiedi il tuo primo permesso sopra.
+              </p>
+            ) : (
+              <ul className="grid gap-4 sm:grid-cols-2">
+                {permits.map(p => (
+                  <PermitCard key={p.permitId} permit={p} />
+                ))}
+              </ul>
+            )}
+          </section>
         </main>
       </SpidLock>
     </div>
   );
 }
 
-function TicketIcon() {
+const STATUS_STYLES: Record<string, string> = {
+  ACTIVE: 'bg-green-100 text-green-800',
+  EXPIRED: 'bg-gray-100 text-gray-600',
+  CANCELLED: 'bg-red-100 text-red-700',
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  ACTIVE: 'Attivo',
+  EXPIRED: 'Scaduto',
+  CANCELLED: 'Annullato',
+};
+
+function PermitCard({ permit }: { permit: FishingPermit }) {
+  const zoneLabel =
+    ZONES.find(z => z.value === permit.zone)?.label ?? permit.zone;
+  const typeLabel =
+    PERMIT_TYPES.find(t => t.value === permit.type)?.label ?? permit.type;
+  const statusStyle = STATUS_STYLES[permit.status] ?? 'bg-gray-100 text-gray-600';
+  const statusLabel = STATUS_LABELS[permit.status] ?? permit.status;
+
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-8 w-8"
-      aria-hidden="true"
-    >
-      <path d="M3 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z" />
-      <path d="M13 5v14" strokeDasharray="2 3" />
-    </svg>
+    <li className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="font-semibold text-gray-900">{zoneLabel}</p>
+          <p className="mt-0.5 text-sm text-gray-500">{typeLabel}</p>
+        </div>
+        <span
+          className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${statusStyle}`}
+        >
+          {statusLabel}
+        </span>
+      </div>
+
+      <div className="mt-3 space-y-1 text-sm text-gray-600">
+        <p>
+          <span className="font-medium">Periodo:</span>{' '}
+          {permit.startDate} → {permit.endDate}
+        </p>
+        <p>
+          <span className="font-medium">Prezzo:</span>{' '}
+          {permit.price === 0 ? 'Gratuito' : `${permit.price}€`}
+        </p>
+        <p>
+          <span className="font-medium">Canne:</span> {permit.numberOfRods}
+        </p>
+        {permit.noKill && (
+          <span
+            className="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium"
+            style={{ backgroundColor: `${BRAND}1A`, color: BRAND }}
+          >
+            No-kill
+          </span>
+        )}
+      </div>
+    </li>
   );
 }
