@@ -30,7 +30,7 @@ class LicenseManager(val connection: DatabaseConfig, val permitNowConfiguration:
         try{
             logger.info("Starting Fishing License addition process")
 
-            val user = userCollection.findOne(UserDocument::_id eq ObjectId(userId))
+            val user = userCollection.findOne(and(UserDocument::_id eq ObjectId(userId), UserDocument::deleted eq false))
                 ?: throw IllegalStateException("User not found")
 
             if (user.fishingLicense != null) {
