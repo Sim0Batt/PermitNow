@@ -127,6 +127,9 @@ export interface UpdateLicensePayload {
 }
 
 export interface FishingPermit {
+// Fishing permit management (admin) — mirrors the server DTOs
+// Mirrors server.models.output.FishingPermitJson
+export interface PermitListItem {
   permitId: string;
   userId: string;
   licenseId: string;
@@ -143,6 +146,9 @@ export interface FishingPermit {
 }
 
 export interface PermitRequestPayload {
+// Mirrors server.models.input.FishingPermitRequestJson
+// licenseId is intentionally omitted: the server derives it from the user's license.
+export interface CreatePermitPayload {
   userId: string;
   zone: string;
   type: string;
