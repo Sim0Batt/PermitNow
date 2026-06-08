@@ -15,6 +15,9 @@ import { LicenseManagementPage } from './dashboard/pages/license/LicenseManageme
 import { LicenseInfoPage } from './dashboard/pages/license/LicenseInfoPage';
 import { NewLicensePage } from './dashboard/pages/license/NewLicensePage';
 import { EditLicensePage } from './dashboard/pages/license/EditLicensePage';
+import { PermitManagementPage } from './dashboard/pages/permit/PermitManagementPage';
+import { PermitInfoPage } from './dashboard/pages/permit/PermitInfoPage';
+import { NewPermitPage } from './dashboard/pages/permit/NewPermitPage';
 import { AuthProvider } from './context/AuthContext';
 import { RequireAuth } from './components/RequireAuth';
 import { LoginPage } from './pages/LoginPage';
@@ -88,6 +91,18 @@ const router = createBrowserRouter([
       {
         path: '/dashboard/licenses/:userId/edit',
         element: <EditLicensePage />,
+      },
+      {
+        path: '/dashboard/permits',
+        element: <PermitManagementPage />,
+      },
+      {
+        path: '/dashboard/permits/create',
+        element: <NewPermitPage />,
+      },
+      {
+        path: '/dashboard/permits/:permitId',
+        element: <PermitInfoPage />,
       },
       {
         path: '/dashboard/users/create',
