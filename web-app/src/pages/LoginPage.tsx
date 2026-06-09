@@ -32,7 +32,6 @@ export const LoginPage = () => {
     try {
       const userResponse = await authApi.login({ email, password }) as UserResponse;
       // Verified status is currently unknown until backend exposes /me.
-      console.log('Login successful, user ID:', userResponse.userId, 'Verified:', userResponse.verified);
       loginUser(userResponse.userId, userResponse.verified ?? false);
       navigate('/');
     } catch (err) {

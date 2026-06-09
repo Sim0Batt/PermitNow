@@ -1,4 +1,3 @@
-import React from 'react';
 import { UserScrollableList } from '../../components/UserScrollableList';
 import { useNavigate } from 'react-router-dom';
 import { NavBarDashboard } from '../../components/NavBarDashboard';

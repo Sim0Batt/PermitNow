@@ -1,4 +1,3 @@
-import React from 'react'
 import { ServerStatus } from './components/ServerStatus'
 import { ServerNumbers } from './components/ServerNumbers'
 import { NavBarDashboard } from './components/NavBarDashboard'

@@ -4,6 +4,7 @@ import { NavBar } from '../components/NavBar';
 import { SpidLock } from '../components/SpidLock';
 import { useAuth } from '../context/AuthContext';
 import { licenseApi } from '../api/license';
+import { formatDateIt } from '../utils/date';
 import type { FishingLicenseInfoJson } from '../types/models';
 
 const BRAND = '#1D9E75';
@@ -11,12 +12,12 @@ const BRAND_DARK = '#178a64';
 
 const statusLabel = (status: string): string => {
   switch (status) {
-    case 'ACTIVE':
+    case 'VALID':
       return 'Attiva';
-    case 'EXPIRED':
-      return 'Scaduta';
     case 'PENDING':
-      return 'In attesa';
+      return 'In verifica';
+    case 'DELETED':
+      return 'Eliminata';
     default:
       return status;
   }
@@ -24,7 +25,7 @@ const statusLabel = (status: string): string => {
 
 const statusColor = (status: string): string => {
   switch (status) {
-    case 'ACTIVE':
+    case 'VALID':
       return 'bg-emerald-100 text-emerald-700';
     case 'PENDING':
       return 'bg-yellow-100 text-yellow-700';
@@ -127,7 +128,7 @@ export function LicencePage() {
                 <div className="flex items-center justify-between px-5 py-4">
                   <span className="text-sm text-gray-500">Scadenza</span>
                   <span className="text-sm font-medium text-gray-900">
-                    {license.expirationDate}
+                    {formatDateIt(license.expirationDate)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between px-5 py-4">

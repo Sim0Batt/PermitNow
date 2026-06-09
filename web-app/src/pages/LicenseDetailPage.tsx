@@ -6,14 +6,10 @@ import { SpidLock } from '../components/SpidLock';
 import { useAuth } from '../context/AuthContext';
 import { licenseApi } from '../api/license';
 import type { FishingLicenseInfoJson } from '../types/models';
+import { formatDateIt } from '../utils/date';
 
 const BRAND = '#1D9E75';
 const BRAND_DARK = '#178a64';
-
-function parseDDMMYYYY(dateStr: string): Date {
-  const [day, month, year] = dateStr.split('/').map(Number);
-  return new Date(year, month - 1, day);
-}
 
 export function LicenseDetailPage() {
   const { userId } = useAuth();
@@ -42,35 +38,24 @@ export function LicenseDetailPage() {
       .finally(() => setLoading(false));
   }, [userId, id]);
 
-  console.log(license)
-
-  const expirationDate = license ? parseDDMMYYYY(license.expirationDate) : null;
-  const expired = expirationDate ? expirationDate < new Date() : false;
-
   const statusLabel = license
-    ? license.status === 'ACTIVE' && !expired
+    ? license.status === 'VALID'
       ? 'Attiva'
-      : license.status === 'EXPIRED' || expired
-        ? 'Scaduta'
-        : license.status === 'PENDING'
-          ? 'In attesa'
+      : license.status === 'PENDING'
+        ? 'In verifica'
+        : license.status === 'DELETED'
+          ? 'Eliminata'
           : license.status
     : '';
 
   const statusColor =
-    license?.status === 'ACTIVE' && !expired
+    license?.status === 'VALID'
       ? 'bg-emerald-100 text-emerald-700'
       : license?.status === 'PENDING'
         ? 'bg-yellow-100 text-yellow-700'
         : 'bg-red-100 text-red-700';
 
-  const formattedExpiry = expirationDate
-    ? expirationDate.toLocaleDateString('it-IT', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric',
-      })
-    : '';
+  const formattedExpiry = license ? formatDateIt(license.expirationDate) : '';
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 text-gray-900">

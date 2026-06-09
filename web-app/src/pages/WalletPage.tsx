@@ -1,6 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { QRCodeSVG } from 'qrcode.react';
 import { NavBar } from '../components/NavBar';
 import { SpidLock } from '../components/SpidLock';
 import { useAuth } from '../context/AuthContext';
@@ -10,7 +8,6 @@ import { FishingLicenseCard } from '../components/FishingLicenseCard';
 import { FishIcon } from '../components/FishIcon';
 
 const BRAND = '#1D9E75';
-const BRAND_DARK = '#178a64';
 
 export function WalletPage() {
   const { userId } = useAuth();
