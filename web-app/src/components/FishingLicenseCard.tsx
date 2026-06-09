@@ -17,18 +17,17 @@ function parseDDMMYYYY(dateStr: string): Date {
 export function FishingLicenseCard({ license }: { license: FishingLicenseInfoJson }) {
   const navigate = useNavigate();
   const expirationDate = parseDDMMYYYY(license.expirationDate);
-  const expired = expirationDate < new Date();
   const statusLabel =
-    license.status === 'ACTIVE'
+    license.status === 'VALID'
       ? 'Attiva'
-      : license.status === 'EXPIRED' || expired
-        ? 'Scaduta'
-        : license.status === 'PENDING'
-          ? 'In attesa'
+      : license.status === 'PENDING'
+        ? 'In verifica'
+        : license.status === 'DELETED'
+          ? 'Eliminata'
           : license.status;
 
   const statusColor =
-    license.status === 'ACTIVE' && !expired
+    license.status === 'VALID'
       ? 'bg-emerald-100 text-emerald-700'
       : license.status === 'PENDING'
         ? 'bg-yellow-100 text-yellow-700'

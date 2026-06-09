@@ -11,12 +11,12 @@ const BRAND_DARK = '#178a64';
 
 const statusLabel = (status: string): string => {
   switch (status) {
-    case 'ACTIVE':
+    case 'VALID':
       return 'Attiva';
-    case 'EXPIRED':
-      return 'Scaduta';
     case 'PENDING':
-      return 'In attesa';
+      return 'In verifica';
+    case 'DELETED':
+      return 'Eliminata';
     default:
       return status;
   }
@@ -24,7 +24,7 @@ const statusLabel = (status: string): string => {
 
 const statusColor = (status: string): string => {
   switch (status) {
-    case 'ACTIVE':
+    case 'VALID':
       return 'bg-emerald-100 text-emerald-700';
     case 'PENDING':
       return 'bg-yellow-100 text-yellow-700';
