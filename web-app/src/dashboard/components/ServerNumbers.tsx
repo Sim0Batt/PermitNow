@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { apiClient } from '../../api/client';
 
 export const ServerNumbers = () => {
-  const [permitStatus, setPermitStatus] = useState('FA');
+  const [permitStatus] = useState('FA');
   const [licenceStatus, setLicenceStatus] = useState('FA');
-  const [newsStatus, setNewsStatus] = useState('FA');
+  const [newsStatus] = useState('FA');
   const [userStatus, setUserStatus] = useState('FA');
   useEffect(() => {
     const fetchStatuses = async () => {

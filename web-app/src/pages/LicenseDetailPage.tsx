@@ -38,8 +38,6 @@ export function LicenseDetailPage() {
       .finally(() => setLoading(false));
   }, [userId, id]);
 
-  console.log(license)
-
   const statusLabel = license
     ? license.status === 'VALID'
       ? 'Attiva'
