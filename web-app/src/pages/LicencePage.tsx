@@ -4,6 +4,7 @@ import { NavBar } from '../components/NavBar';
 import { SpidLock } from '../components/SpidLock';
 import { useAuth } from '../context/AuthContext';
 import { licenseApi } from '../api/license';
+import { formatDateIt } from '../utils/date';
 import type { FishingLicenseInfoJson } from '../types/models';
 
 const BRAND = '#1D9E75';
@@ -127,7 +128,7 @@ export function LicencePage() {
                 <div className="flex items-center justify-between px-5 py-4">
                   <span className="text-sm text-gray-500">Scadenza</span>
                   <span className="text-sm font-medium text-gray-900">
-                    {license.expirationDate}
+                    {formatDateIt(license.expirationDate)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between px-5 py-4">

@@ -2,21 +2,15 @@ import { QRCodeSVG } from "qrcode.react";
 import type { FishingLicenseInfoJson } from "../types/models";
 import { useNavigate } from "react-router-dom";
 import { FishIcon } from "./FishIcon";
+import { formatDateIt } from "../utils/date";
 
 
 const BRAND = '#1D9E75';
 const BRAND_DARK = '#178a64';
 
 
-function parseDDMMYYYY(dateStr: string): Date {
-  const [day, month, year] = dateStr.split('/').map(Number);
-  return new Date(year, month - 1, day);
-}
-
-
 export function FishingLicenseCard({ license }: { license: FishingLicenseInfoJson }) {
   const navigate = useNavigate();
-  const expirationDate = parseDDMMYYYY(license.expirationDate);
   const statusLabel =
     license.status === 'VALID'
       ? 'Attiva'
@@ -33,11 +27,7 @@ export function FishingLicenseCard({ license }: { license: FishingLicenseInfoJso
         ? 'bg-yellow-100 text-yellow-700'
         : 'bg-red-100 text-red-700';
 
-  const formattedExpiry = expirationDate.toLocaleDateString('it-IT', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  });
+  const formattedExpiry = formatDateIt(license.expirationDate);
 
   return (
     <div

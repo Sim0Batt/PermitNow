@@ -6,14 +6,10 @@ import { SpidLock } from '../components/SpidLock';
 import { useAuth } from '../context/AuthContext';
 import { licenseApi } from '../api/license';
 import type { FishingLicenseInfoJson } from '../types/models';
+import { formatDateIt } from '../utils/date';
 
 const BRAND = '#1D9E75';
 const BRAND_DARK = '#178a64';
-
-function parseDDMMYYYY(dateStr: string): Date {
-  const [day, month, year] = dateStr.split('/').map(Number);
-  return new Date(year, month - 1, day);
-}
 
 export function LicenseDetailPage() {
   const { userId } = useAuth();
@@ -44,8 +40,6 @@ export function LicenseDetailPage() {
 
   console.log(license)
 
-  const expirationDate = license ? parseDDMMYYYY(license.expirationDate) : null;
-
   const statusLabel = license
     ? license.status === 'VALID'
       ? 'Attiva'
@@ -63,13 +57,7 @@ export function LicenseDetailPage() {
         ? 'bg-yellow-100 text-yellow-700'
         : 'bg-red-100 text-red-700';
 
-  const formattedExpiry = expirationDate
-    ? expirationDate.toLocaleDateString('it-IT', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric',
-      })
-    : '';
+  const formattedExpiry = license ? formatDateIt(license.expirationDate) : '';
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 text-gray-900">
