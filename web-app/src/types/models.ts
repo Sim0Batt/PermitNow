@@ -34,6 +34,25 @@ export interface UserListItem {
   deleted: boolean;
 }
 
+// Mirrors server.models.output.UserProfileJson (no fiscalCode — never returned)
+export interface UserProfileJson {
+  userId: string;
+  name: string;
+  surname: string;
+  email: string;
+  role: string;
+  verified: boolean;
+}
+
+// Mirrors server.models.input.ProfileUpdateJson
+// fiscalCode may be sent blank: the server then leaves the stored code unchanged.
+export interface ProfileUpdatePayload {
+  name: string;
+  surname: string;
+  email: string;
+  fiscalCode: string;
+}
+
 export interface Licence {
   licenseNumber: string;
   releasedBy: string;

@@ -69,6 +69,14 @@ export function NavBar() {
                   Permessi
                 </button>
               </li>
+              <li>
+                <button
+                  onClick={() => navigate('/profile')}
+                  className="transition-colors hover:text-[#1D9E75]"
+                >
+                  Profilo
+                </button>
+              </li>
             </>
           ) : (
             <>
