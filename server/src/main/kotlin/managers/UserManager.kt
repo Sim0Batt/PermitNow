@@ -13,6 +13,7 @@ import server.models.input.LoginJson
 import server.models.input.RegisterJson
 import server.models.output.LoginResponseJson
 import server.models.output.UserListItemJson
+import server.models.output.UserProfileJson
 import configuration.PermitNowConfiguration
 import exceptions.EncryptionException
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
@@ -138,23 +139,30 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
             if (!user.verified) {
                 if (profileData.name.isBlank()) throw UserException("Name cannot be empty")
                 if (profileData.surname.isBlank()) throw UserException("Surname cannot be empty")
-                val fiscalCodeRegex = Regex("^[A-Z]{6}[0-9]{2}[A-Z][0-9]{2}[A-Z][0-9]{3}[A-Z]$")
-                if (!fiscalCodeRegex.matches(profileData.fiscalCode)) throw UserException("Invalid fiscal code format")
+
+                val updates = mutableListOf(
+                    setValue(UserDocument::name, profileData.name),
+                    setValue(UserDocument::surname, profileData.surname),
+                    setValue(UserDocument::email, profileData.email)
+                )
+
+                // fiscalCode is optional: a blank value leaves the stored code unchanged
+                if (profileData.fiscalCode.isNotBlank()) {
+                    val fiscalCodeRegex = Regex("^[A-Z]{6}[0-9]{2}[A-Z][0-9]{2}[A-Z][0-9]{3}[A-Z]$")
+                    if (!fiscalCodeRegex.matches(profileData.fiscalCode)) throw UserException("Invalid fiscal code format")
+                    updates.add(setValue(UserDocument::fiscalCode, encryptFiscalCode(profileData.fiscalCode, permitNowConfiguration.aesKey)))
+                }
 
                 usersCollection.updateOne(
                     UserDocument::_id eq ObjectId(userId),
-                    combine(
-                        setValue(UserDocument::name, profileData.name),
-                        setValue(UserDocument::surname, profileData.surname),
-                        setValue(UserDocument::email, profileData.email),
-                        setValue(UserDocument::fiscalCode, encryptFiscalCode(profileData.fiscalCode, permitNowConfiguration.aesKey))
-                    )
+                    combine(*updates.toTypedArray())
                 )
             } else {
                 // TODO(auth-spid): enforce verified field via SPID assertion, not client input
+                // A blank fiscalCode is allowed: it means "unchanged" rather than a modification attempt.
                 if (profileData.name != user.name ||
                     profileData.surname != user.surname ||
-                    profileData.fiscalCode != decryptFiscalCode(user.fiscalCode)
+                    (profileData.fiscalCode.isNotBlank() && profileData.fiscalCode != decryptFiscalCode(user.fiscalCode))
                 ) throw UserException("Field cannot be modified after SPID verification")
 
                 usersCollection.updateOne(
@@ -251,6 +259,32 @@ class UserManager (val connection: DatabaseConfig, val permitNowConfiguration: P
                     deleted = it.deleted
                 )
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw UserException(e.message.toString())
+        }
+    }
+
+    suspend fun getUser(userId: String): UserProfileJson {
+        try {
+            val objectId = try {
+                ObjectId(userId)
+            } catch (e: IllegalArgumentException) {
+                throw UserException("Invalid user id")
+            }
+
+            val user = usersCollection.findOne(
+                and(UserDocument::_id eq objectId, UserDocument::deleted eq false)
+            ) ?: throw UserException("User not found")
+
+            return UserProfileJson(
+                userId = user._id.toHexString(),
+                name = user.name,
+                surname = user.surname,
+                email = user.email,
+                role = user.role,
+                verified = user.verified
+            )
         } catch (e: Exception) {
             e.printStackTrace()
             throw UserException(e.message.toString())

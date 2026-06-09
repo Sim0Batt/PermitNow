@@ -200,6 +200,21 @@ fun Application.module() {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
             }
         }
+        get("/user/{userId}") {
+            // TODO(auth): require authenticated user matching userId
+            val userId = call.parameters["userId"]
+            if (userId == null) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing userId parameter"))
+                return@get
+            }
+            try {
+                call.respond(HttpStatusCode.OK, userManager.getUser(userId))
+            } catch (e: UserException) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.customMessage))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
         delete("/user/{userId}") {
             // TODO(auth): require admin role before allowing deletion
             val userId = call.parameters["userId"]
