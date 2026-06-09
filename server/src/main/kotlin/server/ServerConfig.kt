@@ -441,6 +441,7 @@ fun Application.module() {
             try{
                 val pageId = call.parameters["pageId"]
                 bookManager.deletePage(pageId!!)
+                call.respond(HttpStatusCode.OK, mapOf("message" to "Page deleted successfully"))
             }catch (e: Exception){
                 e.printStackTrace()
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
@@ -451,6 +452,7 @@ fun Application.module() {
             try{
                 val rowId = call.parameters["rowId"]
                 bookManager.deleteRow(rowId!!)
+                call.respond(HttpStatusCode.OK, mapOf("message" to "Row deleted successfully"))
             }catch (e: Exception) {
                 e.printStackTrace()
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
@@ -514,6 +516,7 @@ fun Application.module() {
         delete("/permit/fishing/{permitId}") {
             try {
                 permitManager.deletePermit(call.parameters["permitId"]!!)
+                call.respond(HttpStatusCode.OK, mapOf("message" to "Permit deleted successfully"))
             }catch (e: Exception){
                 e.printStackTrace()
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
