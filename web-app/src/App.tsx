@@ -5,6 +5,8 @@ import { LicencePage } from './pages/LicencePage';
 import { LicenseDetailPage } from './pages/LicenseDetailPage';
 import { FishingBookPage } from './pages/FishingBookPage';
 import { PermitsPage } from './pages/PermitsPage';
+import { PermitDetailPage } from './pages/PermitDetailPage';
+import { ProfilePage } from './pages/ProfilePage';
 import { RegisterPage } from './pages/RegisterPage';
 import DashboardHomePage from './dashboard/DashboardHomePage';
 import { DashboardLoginPage } from './dashboard/pages/DashboardLoginPage';
@@ -57,6 +59,14 @@ const router = createBrowserRouter([
       {
         path: '/permits',
         element: <PermitsPage />,
+      },
+      {
+        path: '/permits/:permitId',
+        element: <PermitDetailPage />,
+      },
+      {
+        path: '/profile',
+        element: <ProfilePage />,
       },
     ],
   },

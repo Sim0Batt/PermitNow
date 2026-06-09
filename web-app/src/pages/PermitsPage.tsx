@@ -1,35 +1,20 @@
 import { useState, useEffect, type FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { NavBar } from '../components/NavBar';
 import { SpidLock } from '../components/SpidLock';
 import { useAuth } from '../context/AuthContext';
 import { permitsApi } from '../api/permits';
+import {
+  ZONES,
+  PERMIT_TYPES,
+  zoneLabel,
+  permitTypeLabel,
+  permitStatusLabel,
+  permitStatusStyle,
+} from '../utils/permits';
 import type { FishingPermit, PermitRequestPayload } from '../types/models';
 
 const BRAND = '#1D9E75';
-
-const ZONES: { value: string; label: string }[] = [
-  { value: 'ALTO_SARCA', label: 'Alto Sarca' },
-  { value: 'BASSO_SARCA', label: 'Basso Sarca' },
-  { value: 'VAL_DI_NON', label: 'Val di Non' },
-  { value: 'VALSUGANA', label: 'Valsugana' },
-  { value: 'ALTO_CHIESE', label: 'Alto Chiese' },
-  { value: 'LAGO_DI_GARDA', label: 'Lago di Garda' },
-  { value: 'LAGO_DI_TOVEL', label: 'Lago di Tovel' },
-  { value: 'LAGO_DI_SANTA_GIUSTINA', label: 'Lago di Santa Giustina' },
-  { value: 'LAGO_DI_LEDRO', label: 'Lago di Ledro' },
-  { value: 'LAGO_DI_CAVEDINE', label: 'Lago di Cavedine' },
-  { value: 'FIUME_ADIGE', label: 'Fiume Adige' },
-  { value: 'FIUME_BRENTA', label: 'Fiume Brenta' },
-  { value: 'ALTO_ADIGE_BOLZANO', label: 'Alto Adige / Bolzano' },
-  { value: 'VAL_PUSTERIA', label: 'Val Pusteria' },
-  { value: 'VAL_GARDENA', label: 'Val Gardena' },
-];
-
-const PERMIT_TYPES: { value: string; label: string; price: number }[] = [
-  { value: 'GIORNALIERO', label: 'Giornaliero', price: 23 },
-  { value: 'SETTIMANALE', label: 'Settimanale', price: 80 },
-  { value: 'ANNUALE', label: 'Annuale', price: 160 },
-];
 
 interface FormState {
   zone: string;
@@ -277,37 +262,29 @@ export function PermitsPage() {
   );
 }
 
-const STATUS_STYLES: Record<string, string> = {
-  ACTIVE: 'bg-green-100 text-green-800',
-  EXPIRED: 'bg-gray-100 text-gray-600',
-  CANCELLED: 'bg-red-100 text-red-700',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  ACTIVE: 'Attivo',
-  EXPIRED: 'Scaduto',
-  CANCELLED: 'Annullato',
-};
-
 function PermitCard({ permit }: { permit: FishingPermit }) {
-  const zoneLabel =
-    ZONES.find(z => z.value === permit.zone)?.label ?? permit.zone;
-  const typeLabel =
-    PERMIT_TYPES.find(t => t.value === permit.type)?.label ?? permit.type;
-  const statusStyle = STATUS_STYLES[permit.status] ?? 'bg-gray-100 text-gray-600';
-  const statusLabel = STATUS_LABELS[permit.status] ?? permit.status;
+  const navigate = useNavigate();
 
   return (
-    <li className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+    <li
+      onClick={() => navigate(`/permits/${permit.permitId}`)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') navigate(`/permits/${permit.permitId}`);
+      }}
+      aria-label={`Apri dettaglio permesso ${zoneLabel(permit.zone)}`}
+      className="cursor-pointer rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+    >
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="font-semibold text-gray-900">{zoneLabel}</p>
-          <p className="mt-0.5 text-sm text-gray-500">{typeLabel}</p>
+          <p className="font-semibold text-gray-900">{zoneLabel(permit.zone)}</p>
+          <p className="mt-0.5 text-sm text-gray-500">{permitTypeLabel(permit.type)}</p>
         </div>
         <span
-          className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${statusStyle}`}
+          className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${permitStatusStyle(permit.status)}`}
         >
-          {statusLabel}
+          {permitStatusLabel(permit.status)}
         </span>
       </div>
 
