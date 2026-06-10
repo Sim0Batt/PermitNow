@@ -5,128 +5,292 @@ HOST: https://polls.apiblueprint.org/
 
 Documentazione delle API RESTful per il backend di PermitNow.
 
-# Group Gestione Utenti
-Endpoint dedicati alla gestione degli utenti sui servizi PermitNow.
+# Group Autenticazione e Utenti
+Endpoint dedicati all'autenticazione e alla gestione degli utenti sui servizi PermitNow.
 
 ## Registrazione [/register]
 
 ### Register [POST]
-Permette la registrazione di un utente sul sistema PermitNow.
+Permette la registrazione di un nuovo utente sul sistema PermitNow. In caso di successo il corpo della risposta contiene direttamente l'ID (ObjectId) dell'utente creato. In caso di errore (email già registrata o dati non validi) il backend risponde comunque con HTTP 200 e il corpo testuale `FA`.
 
 + Request (application/json)
     + Attributes (RegisterJson)
-        
-+ Response 200 (application/json)
-    + Attributes
-        + userId: `6a020410abe0a8034525a54c` (string) - L'ID del nuovo utente creato
 
-+ Response 409 (application/json)
++ Response 200 (text/plain)
     + Body
 
-            {
-                "error": "User already exists with this email"
-            }
-
-+ Response 404 (application/json)
-    + Body
-
-            {
-                "error": "Invalid Registration Data"
-            }
-            
+            6a020410abe0a8034525a54c
 
 ## Accesso [/login]
 
 ### Login [POST]
-Permette il login di un utente sul sistema PermitNow.
+Permette il login di un utente. Restituisce l'ID dell'utente e lo stato di verifica SPID (`verified`).
 
 + Request (application/json)
     + Attributes (LoginJson)
 
 + Response 200 (application/json)
-    + Attributes
-        + userId: `6a020410abe0a8034525a54c` (string) - L'ID univoco dell'utente generato da MongoDB
+    + Attributes (LoginResponseJson)
 
-+ Response 400 (application/json)
++ Response 401 (application/json)
     + Body
-            
+
             {
-                "error": "Invalid login data"
+                "error": "Wrong password"
             }
 
-+ Response 404 (application/json)
++ Response 500 (application/json)
     + Body
-            
-            {
-                "error": "User not found"
-            }
-            
 
-## Profilo Utente [/users/{userId}]
+            {
+                "error": "Internal server error"
+            }
+
+## Accesso Amministratore [/login/admin]
+
+### Login Admin [POST]
+Permette il login di un utente con privilegi di amministratore. Restituisce l'ID dell'utente. Se l'utente non possiede il ruolo `admin` la richiesta viene rifiutata.
+
++ Request (application/json)
+    + Attributes (LoginJson)
+
++ Response 200 (text/plain)
+    + Body
+
+            6a020410abe0a8034525a54c
+
++ Response 401 (application/json)
+    + Body
+
+            {
+                "error": "Access denied: user is not an admin"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "error": "Internal server error"
+            }
+
+## Logout [/logout]
+
+### Logout [POST]
+Conferma il logout dell'utente. Il backend non gestisce sessioni o JWT: l'endpoint è un placeholder per future operazioni di audit.
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "message": "Logout successful"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "error": "Internal server error"
+            }
+
+## Utente Singolo [/user/{userId}]
 
 + Parameters
     + userId: `6a020410abe0a8034525a54c` (string, required) - L'ObjectId di MongoDB dell'utente.
 
-### Aggiorna Profilo [PUT]
-Aggiorna i dati anagrafici di base dell'utente.
+### Ottieni Utente [GET]
+Restituisce i dati anagrafici di base dell'utente. Il codice fiscale, conservato cifrato, non viene mai restituito ai client.
+
++ Response 200 (application/json)
+    + Attributes (UserProfileJson)
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "error": "User not found"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "error": "Internal server error"
+            }
+
+### Elimina Utente [DELETE]
+Effettua un "soft-delete" dell'utente impostando il flag `deleted` a `true`. Richiede privilegi di Amministratore.
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "message": "User deleted successfully"
+            }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "error": "User already deleted"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "error": "Internal server error"
+            }
+
+## Aggiorna Profilo [/user/{userId}/profile]
+
++ Parameters
+    + userId: `6a020410abe0a8034525a54c` (string, required) - L'ObjectId di MongoDB dell'utente.
+
+### Aggiorna Profilo [POST]
+Aggiorna i dati anagrafici dell'utente. Per gli utenti verificati tramite SPID è modificabile solo l'email; nome, cognome e codice fiscale restano bloccati. Il campo `fiscalCode` può essere inviato vuoto per lasciarlo invariato.
 
 + Request (application/json)
     + Attributes (ProfileUpdateJson)
 
 + Response 200 (application/json)
     + Body
-            
+
             {
                 "message": "Profile updated successfully"
             }
 
 + Response 400 (application/json)
     + Body
-            
+
             {
-                "error": "Name cannot be empty"
+                "error": "Invalid email format"
             }
 
-+ Response 404 (application/json)
++ Response 500 (application/json)
     + Body
-            
+
             {
-                "error": "User not found"
+                "error": "Internal server error"
             }
 
-
-## Sicurezza Utente [/users/{userId}/password]
+## Cambia Password [/user/{userId}/change-password]
 
 + Parameters
     + userId: `6a020410abe0a8034525a54c` (string, required) - L'ObjectId di MongoDB dell'utente.
 
 ### Cambia Password [POST]
-Permette all'utente di cambiare la propria password sul sistema, previa verifica di quella attuale.
+Permette all'utente di cambiare la propria password, previa verifica di quella attuale. La nuova password deve essere lunga almeno 8 caratteri e diversa da quella corrente.
 
 + Request (application/json)
     + Attributes (ChangePasswordJson)
 
 + Response 200 (application/json)
     + Body
-            
+
             {
                 "message": "Password updated successfully"
             }
 
 + Response 400 (application/json)
     + Body
-            
-            {
-                "error": "New password cannot be empty"
-            }
 
-+ Response 401 (application/json)
-    + Body
-            
             {
                 "error": "Current password is incorrect"
             }
-            
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "error": "Internal server error"
+            }
+
+## Verifica Utente (Admin) [/user/{userId}/verify]
+
++ Parameters
+    + userId: `6a020410abe0a8034525a54c` (string, required) - L'ObjectId di MongoDB dell'utente.
+
+### Inverti Stato di Verifica [POST]
+Inverte lo stato di verifica (`verified`) di un utente. Richiede privilegi di Amministratore.
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "message": "User verification toggled successfully"
+            }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "error": "Cannot verify a deleted user"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "error": "Internal server error"
+            }
+
+## Lista Utenti (Admin) [/user/list]
+
+### Ottieni Tutti gli Utenti [GET]
+Restituisce l'elenco completo degli utenti registrati. Richiede privilegi di Amministratore.
+
++ Response 200 (application/json)
+    + Attributes (array[UserListItemJson])
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "error": "Error retrieving users"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "error": "Internal server error"
+            }
+
+## Creazione Utente (Admin) [/admin/users]
+
+### Crea Utente [POST]
+Permette a un amministratore di creare manualmente un nuovo utente. L'utente viene creato con ruolo `user` e stato non verificato.
+
++ Request (application/json)
+    + Attributes (AdminCreateUserJson)
+
++ Response 201 (application/json)
+    + Body
+
+            {
+                "id": "6a020410abe0a8034525a54c"
+            }
+
++ Response 409 (application/json)
+    + Body
+
+            {
+                "error": "Email già in uso"
+            }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "error": "Name cannot be blank"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "error": "Internal server error"
+            }
 
 # Group Gestione Licenze
 Endpoint dedicati alla lettura, creazione e modifica delle licenze di pesca per gli utenti.
@@ -154,7 +318,7 @@ Permette di creare una licenza caricando una foto. Il backend utilizzerà l'AI p
 
 + Request (multipart/form-data; boundary=---BOUNDARY)
     Questo endpoint utilizza `multipart/form-data`.
-    
+
     + Body
 
             -----BOUNDARY
@@ -259,6 +423,293 @@ Effettua un "soft-delete" o rimozione della licenza dal profilo dell'utente.
                 "error": "License already deleted"
             }
 
+# Group Gestione Permessi
+Endpoint dedicati alla richiesta, creazione e gestione dei permessi di pesca.
+
+## Lista Completa Permessi (Admin) [/permit/list]
+
+### Ottieni Tutti i Permessi [GET]
+Restituisce l'elenco completo dei permessi presenti nel sistema. Richiede privilegi di Amministratore.
+
++ Response 200 (application/json)
+    + Attributes (array[FishingPermitJson])
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "error": "Internal server error"
+            }
+
+## Richiesta Permesso [/permit/fishing]
+
+### Richiedi Permesso [POST]
+Permette a un utente verificato e con licenza valida di richiedere un nuovo permesso di pesca. Il prezzo viene calcolato in base al tipo (`GIORNALIERO`, `SETTIMANALE`, `ANNUALE`).
+
++ Request (application/json)
+    + Attributes (FishingPermitRequestJson)
+
++ Response 201 (application/json)
+    + Body
+
+            {
+                "message": "Permit created successfully"
+            }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "error": "User is not verified"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "error": "Internal server error"
+            }
+
+## Creazione Permesso (Admin) [/permit/fishing/admin]
+
+### Crea Permesso Gratuito [POST]
+Permette a un amministratore di creare un permesso gratuito (prezzo 0) per un utente, saltando il flusso di pagamento.
+
++ Request (application/json)
+    + Attributes (FishingPermitRequestJson)
+
++ Response 201 (application/json)
+    + Body
+
+            {
+                "message": "Permit created successfully"
+            }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "error": "Invalid fishing zone"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "error": "Internal server error"
+            }
+
+## Permesso per Utente o Singolo [/permit/fishing/{id}]
+
++ Parameters
+    + id: `6a020410abe0a8034525a54c` (string, required) - In lettura (GET) è l'`userId` proprietario; in cancellazione (DELETE) è il `permitId` del singolo permesso.
+
+### Ottieni Permessi Utente [GET]
+Restituisce tutti i permessi di un utente specifico. Il parametro `id` corrisponde all'`userId`.
+
++ Response 200 (application/json)
+    + Attributes (array[FishingPermitJson])
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "error": "Invalid user id"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "error": "Internal server error"
+            }
+
+### Elimina Permesso [DELETE]
+Elimina definitivamente un permesso. Il parametro `id` corrisponde al `permitId`. Richiede privilegi di Amministratore.
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "message": "Permit deleted successfully"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "error": "Internal server error"
+            }
+
+## Pulizia Permessi Scaduti (Admin) [/permit/clear]
+
+### Elimina Permessi Scaduti [DELETE]
+Rimuove dal sistema tutti i permessi con stato `EXPIRED`. Richiede privilegi di Amministratore.
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "message": "Expired permits cleared successfully"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "error": "Internal server error"
+            }
+
+# Group Libretto di Pesca
+Endpoint dedicati alla gestione del libretto segna-catture: pagine giornaliere e righe (catture).
+
+## Pagine del Libretto [/page/{id}]
+
++ Parameters
+    + id: `6a020410abe0a8034525a54c` (string, required) - Identificatore il cui significato dipende dall'operazione (vedi le singole azioni).
+
+### Crea Pagina [POST]
+Crea una nuova pagina datata in giornata odierna per il libretto dell'utente. Il parametro `id` corrisponde all'`userId`. Non è possibile creare più di una pagina per lo stesso giorno.
+
++ Response 200
+
++ Response 409 (application/json)
+    + Body
+
+            {
+                "error": "Book already has a page for today"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "error": "Internal server error"
+            }
+
+### Lista Pagine [GET]
+Restituisce tutte le pagine di un libretto. Il parametro `id` corrisponde al `bookCode` del libretto.
+
++ Response 200 (application/json)
+    + Attributes (array[FishingPageInfoJson])
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "error": "Internal server error"
+            }
+
+### Elimina Pagina [DELETE]
+Elimina una pagina e tutte le righe in essa contenute. Il parametro `id` corrisponde al `pageId`.
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "message": "Page deleted successfully"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "error": "Internal server error"
+            }
+
+## Righe del Libretto [/row/{id}]
+
++ Parameters
+    + id: `6a020410abe0a8034525a54e` (string, required) - Identificatore il cui significato dipende dall'operazione (vedi le singole azioni).
+
+### Aggiungi Riga [POST]
+Aggiunge una riga (cattura) a una pagina del libretto. Il parametro `id` corrisponde al `pageId`.
+
++ Request (application/json)
+    + Attributes (FishingRowJson)
+
++ Response 200
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "error": "Internal server error"
+            }
+
+### Lista Righe [GET]
+Restituisce tutte le righe (catture) di una pagina. Il parametro `id` corrisponde al `pageId`.
+
++ Response 200 (application/json)
+    + Attributes (array[FishingRowInfoJson])
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "error": "Internal server error"
+            }
+
+### Elimina Riga [DELETE]
+Elimina una singola riga (cattura) dal libretto. Il parametro `id` corrisponde al `rowId`.
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "message": "Row deleted successfully"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "error": "Internal server error"
+            }
+
+
+# Group Stato Servizio
+Endpoint di monitoraggio per verificare lo stato del servizio e ottenere alcuni contatori di base. Utilizzati principalmente dalla dashboard di amministrazione.
+
+## Stato Generale [/status]
+
+### Verifica Stato [GET]
+Verifica che il server sia attivo e raggiungibile.
+
++ Response 200 (text/plain)
+    + Body
+
+            OK
+
+## Conteggio Licenze [/status/license]
+
+### Numero Licenze Attive [GET]
+Restituisce il numero totale di licenze presenti nel sistema. In caso di errore il backend risponde con HTTP 500 e il corpo testuale `FA`.
+
++ Response 200 (application/json)
+    + Body
+
+            42
+
++ Response 500 (text/plain)
+    + Body
+
+            FA
+
+## Conteggio Utenti [/status/user]
+
+### Numero Utenti Registrati [GET]
+Restituisce il numero totale di utenti registrati nel sistema. In caso di errore il backend risponde con HTTP 500 e il corpo testuale `FA`.
+
++ Response 200 (application/json)
+    + Body
+
+            128
+
++ Response 500 (text/plain)
+    + Body
+
+            FA
 
 # Data Structures
 
@@ -275,15 +726,43 @@ Effettua un "soft-delete" o rimozione della licenza dal profilo dell'utente.
 + role: `user` (string, required)
 + verified: true (boolean, required)
 
+## LoginResponseJson (object)
++ userId: `6a020410abe0a8034525a54c` (string, required)
++ verified: true (boolean, required)
+
 ## ProfileUpdateJson (object)
 + name: `Mario` (string, required)
 + surname: `Rossi` (string, required)
 + email: `mario.rossi.nuovo@email.com` (string, required)
-+ fiscalCode: `RSSMRA80A01H501V` (string, required)
++ fiscalCode: `RSSMRA80A01H501V` (string, optional) - Può essere inviato vuoto per lasciare invariato il codice fiscale.
 
 ## ChangePasswordJson (object)
 + currentPassword: `vecchiaPassword1` (string, required)
 + newPassword: `nuovaPassword2` (string, required)
+
+## UserProfileJson (object)
++ userId: `6a020410abe0a8034525a54c` (string, required)
++ name: `Mario` (string, required)
++ surname: `Rossi` (string, required)
++ email: `mario.rossi@email.com` (string, required)
++ role: `user` (string, required)
++ verified: true (boolean, required)
+
+## UserListItemJson (object)
++ id: `6a020410abe0a8034525a54c` (string, required)
++ name: `Mario` (string, required)
++ surname: `Rossi` (string, required)
++ email: `mario.rossi@email.com` (string, required)
++ role: `user` (string, required)
++ verified: true (boolean, required)
++ deleted: false (boolean, required)
+
+## AdminCreateUserJson (object)
++ name: `Mario` (string, required)
++ surname: `Rossi` (string, required)
++ email: `mario.rossi@email.com` (string, required)
++ password: `password123` (string, required)
++ fiscalCode: `RSSMRA80A01H501V` (string, required)
 
 ## AdminCreateLicenseRequest (object)
 + userId: `6a020410abe0a8034525a54c` (string, required)
@@ -325,3 +804,49 @@ Effettua un "soft-delete" o rimozione della licenza dal profilo dell'utente.
 + noKill: true (boolean, required)
 + bookCode: `LIB-9945` (string, required)
 + expirationDate: `2026-12-31` (string, required)
+
+## FishingPermitJson (object)
++ permitId: `6a020410abe0a8034525a54d` (string, required)
++ userId: `6a020410abe0a8034525a54c` (string, required)
++ licenseId: `6a020410abe0a8034525a54e` (string, required)
++ zone: `ALTO_SARCA` (string, required)
++ type: `GIORNALIERO` (string, required)
++ noKill: false (boolean, required)
++ startDate: `2026-06-10` (string, required)
++ endDate: `2026-06-11` (string, required)
++ numberOfRods: 1 (number, required)
++ maxCatch: 5 (number, required)
++ price: 23.0 (number, required)
++ status: `ACTIVE` (string, required)
++ qrCodeToken: `abcd-1234-efgh-5678` (string, required)
+
+## FishingPermitRequestJson (object)
++ userId: `6a020410abe0a8034525a54c` (string, required)
++ zone: `ALTO_SARCA` (string, required)
++ type: `GIORNALIERO` (string, required)
++ noKill: false (boolean, required)
++ startDate: `2026-06-10` (string, required)
++ numberOfRods: 1 (number, required)
++ maxCatch: 5 (number, required)
+
+## FishingRowJson (object)
++ id: `6a020410abe0a8034525a54f` (string, required)
++ pageId: `6a020410abe0a8034525a550` (string, required)
++ fishName: `Trota fario` (string, required)
++ date: `2026-06-10` (string, required)
++ zone: `ALTO_SARCA` (string, required)
++ specie: `Femmina` (string, required)
++ measure: 32.5 (number, required)
+
+## FishingPageInfoJson (object)
++ id: `6a020410abe0a8034525a550` (string, required)
++ bookId: `LIB-9945` (string, required)
++ date: `2026-06-10` (string, required)
+
+## FishingRowInfoJson (object)
++ id: `6a020410abe0a8034525a54f` (string, required)
++ pageId: `6a020410abe0a8034525a550` (string, required)
++ fishName: `Trota fario` (string, required)
++ zone: `ALTO_SARCA` (string, required)
++ specie: `Femmina` (string, required)
++ measure: 32.5 (number, required)
