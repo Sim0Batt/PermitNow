@@ -7,7 +7,7 @@ const BRAND_DARK = '#178a64';
 
 export function NavBar() {
   const navigate = useNavigate();
-  const { isAuthenticated, verified, logout } = useAuth();
+  const { isAuthenticated, role, verified, logout } = useAuth();
 
   const scrollTo = (id: string) => {
     document
@@ -23,10 +23,9 @@ export function NavBar() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-gray-200 bg-white">
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
-        {/* TODO(auth): admin role should navigate to /dashboard */}
         <button
           type="button"
-          onClick={() => navigate('/')}
+          onClick={() => navigate(role === 'admin' ? '/dashboard' : '/')}
           className="flex items-center gap-2 text-lg font-bold text-gray-900"
         >
           <LeafIcon className="h-6 w-6" style={{ color: BRAND }} />
