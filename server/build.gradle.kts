@@ -75,6 +75,15 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
 }
+
+tasks.shadowJar {
+    archiveBaseName.set("permitnowserver")
+    archiveClassifier.set("")
+    archiveVersion.set("")
+    manifest {
+        attributes["Main-Class"] = "Main"
+    }
+}
 kotlin {
     jvmToolchain(24)
 }

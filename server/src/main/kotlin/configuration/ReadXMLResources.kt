@@ -4,7 +4,7 @@ import org.simpleframework.xml.core.Persister
 import utils.xmlPath
 import java.io.File
 
-var mainPath : String = "/home/ubuntu/etc/PermitNow/settings.xml"
+var mainPath : String = "/home/dev/etc/settings.xml"
 
 
 object ReadXMLResources {
