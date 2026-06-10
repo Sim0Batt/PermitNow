@@ -2,15 +2,20 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NavBar } from '../components/NavBar';
 import { useAuth } from '../context/AuthContext';
+import { licenseApi } from '../api/license';
+import { permitsApi } from '../api/permits';
+import { isPastDate } from '../utils/date';
 
 const BRAND = '#1D9E75';
 const BRAND_DARK = '#178a64';
 
 export function HomePage() {
   const navigate = useNavigate();
-  const { role, verified } = useAuth();
+  const { userId, role, verified } = useAuth();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [activeNewsIndex, setActiveNewsIndex] = useState(0);
+  const [hasLicense, setHasLicense] = useState(false);
+  const [hasActivePermit, setHasActivePermit] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -18,6 +23,38 @@ export function HomePage() {
     }, 4000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (!userId) {
+      setHasLicense(false);
+      setHasActivePermit(false);
+      return;
+    }
+    let cancelled = false;
+    licenseApi
+      .getUserLicense(userId)
+      .then(() => {
+        if (!cancelled) setHasLicense(true);
+      })
+      .catch(() => {
+        if (!cancelled) setHasLicense(false);
+      });
+    permitsApi
+      .getPermitsByUser(userId)
+      .then((permits) => {
+        if (!cancelled) {
+          setHasActivePermit(
+            permits.some((p) => p.status === 'ACTIVE' && !isPastDate(p.endDate))
+          );
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setHasActivePermit(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   const scrollTo = (id: string) => {
     document
@@ -32,22 +69,17 @@ export function HomePage() {
         ? 'unverified'
         : 'guest';
 
-  const stepStartIndex =
-    mode === 'verified' ? 2 : mode === 'unverified' ? 1 : 0;
+  // Stepper reflects progress: guests see all 4 steps, licensed users only the
+  // last 2, and users with an active permit see no "Come funziona" at all.
+  const showHowItWorks = !(hasLicense && hasActivePermit);
+  const stepStartIndex = hasLicense ? 2 : 0;
   const visibleSteps = STEPS.slice(stepStartIndex);
-  const currentStepIndex = mode === 'guest' ? -1 : 0;
+  const currentStepIndex = role === 'user' ? 0 : -1;
   const stepsGridCols =
-    visibleSteps.length === 2
-      ? 'lg:grid-cols-2'
-      : visibleSteps.length === 3
-        ? 'lg:grid-cols-3'
-        : 'lg:grid-cols-4';
-  const stepsSubtitle =
-    mode === 'verified'
-      ? 'Due passaggi per gestire licenze e permessi.'
-      : mode === 'unverified'
-        ? 'Tre passaggi per completare la configurazione.'
-        : 'Quattro passaggi per accedere a tutti i tuoi documenti.';
+    visibleSteps.length === 2 ? 'lg:grid-cols-2' : 'lg:grid-cols-4';
+  const stepsSubtitle = hasLicense
+    ? 'Due passaggi per gestire licenze e permessi.'
+    : 'Quattro passaggi per accedere a tutti i tuoi documenti.';
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
@@ -241,7 +273,8 @@ export function HomePage() {
       </section>
 
       {/* How it works */}
-      <section id="come-funziona" className="bg-gray-50">
+      {showHowItWorks && (
+        <section id="come-funziona" className="bg-gray-50">
         <div className="mx-auto max-w-6xl px-4 py-20">
           <div className="max-w-2xl">
             <h2 className="text-3xl font-bold tracking-tight text-gray-900">
@@ -288,7 +321,8 @@ export function HomePage() {
             })}
           </ol>
         </div>
-      </section>
+        </section>
+      )}
 
       {/* FAQ */}
       <section id="faq" className="bg-white">

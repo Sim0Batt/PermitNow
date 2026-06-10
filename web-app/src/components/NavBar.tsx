@@ -110,6 +110,14 @@ export function NavBar() {
               </li>
               <li>
                 <button
+                  onClick={() => scrollTo('notizie')}
+                  className="transition-colors hover:text-[#1D9E75]"
+                >
+                  Notizie
+                </button>
+              </li>
+              <li>
+                <button
                   onClick={() => scrollTo('come-funziona')}
                   className="transition-colors hover:text-[#1D9E75]"
                 >
