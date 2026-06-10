@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { NavBar } from '../components/NavBar';
 import { SpidLock } from '../components/SpidLock';
 import { useAuth } from '../context/AuthContext';
 import { licenseApi } from '../api/license';
-import type { FishingLicenseInfoJson } from '../types/models';
+import { permitsApi } from '../api/permits';
+import { formatDateIt, isPastDate } from '../utils/date';
+import { zoneLabel, permitTypeLabel } from '../utils/permits';
+import type { FishingLicenseInfoJson, FishingPermit } from '../types/models';
 import { FishingLicenseCard } from '../components/FishingLicenseCard';
 import { FishIcon } from '../components/FishIcon';
 
@@ -12,6 +16,7 @@ const BRAND = '#1D9E75';
 export function WalletPage() {
   const { userId } = useAuth();
   const [license, setLicense] = useState<FishingLicenseInfoJson | null>(null);
+  const [permits, setPermits] = useState<FishingPermit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,7 +32,17 @@ export function WalletPage() {
       .then(setLicense)
       .catch(() => setError('Impossibile caricare le licenze. Riprova più tardi.'))
       .finally(() => setLoading(false));
+
+    permitsApi
+      .getPermitsByUser(userId)
+      .then(setPermits)
+      .catch(() => setPermits([]));
   }, [userId]);
+
+  // Show only currently-valid permits: ACTIVE status and not past their end date.
+  const activePermits = permits.filter(
+    (p) => p.status === 'ACTIVE' && !isPastDate(p.endDate)
+  );
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 text-gray-900">
@@ -71,9 +86,55 @@ export function WalletPage() {
 
           {license && <FishingLicenseCard license={license} />}
 
+          {!loading && (
+            <section className="mt-10">
+              <h2 className="mb-4 text-lg font-semibold text-gray-900">
+                Permessi attivi
+              </h2>
+              {activePermits.length === 0 ? (
+                <p className="text-sm text-gray-500">Nessun permesso attivo</p>
+              ) : (
+                <ul className="grid gap-4">
+                  {activePermits.map((permit) => (
+                    <WalletPermitCard key={permit.permitId} permit={permit} />
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
+
         </main>
       </SpidLock>
     </div>
+  );
+}
+
+function WalletPermitCard({ permit }: { permit: FishingPermit }) {
+  return (
+    <li className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <p className="font-semibold text-gray-900">{zoneLabel(permit.zone)}</p>
+          <p className="mt-0.5 text-sm text-gray-500">{permitTypeLabel(permit.type)}</p>
+          <p className="mt-3 text-sm text-gray-600">
+            <span className="font-medium">Periodo:</span>{' '}
+            {formatDateIt(permit.startDate)} → {formatDateIt(permit.endDate)}
+          </p>
+        </div>
+        <div className="flex flex-col items-center gap-1.5">
+          <div className="rounded-xl bg-white p-2 ring-1 ring-gray-100">
+            <QRCodeSVG
+              value={permit.qrCodeToken}
+              size={84}
+              bgColor="#ffffff"
+              fgColor={BRAND}
+              level="M"
+            />
+          </div>
+          <p className="text-[10px] text-gray-400">Scansiona</p>
+        </div>
+      </div>
+    </li>
   );
 }
 
