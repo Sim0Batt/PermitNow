@@ -1,13 +1,34 @@
 import { useNavigate } from 'react-router-dom';
-import type { CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { userApi } from '../api/user';
 
 const BRAND = '#1D9E75';
 const BRAND_DARK = '#178a64';
 
 export function NavBar() {
   const navigate = useNavigate();
-  const { isAuthenticated, role, verified, logout } = useAuth();
+  const { isAuthenticated, userId, role, verified, logout } = useAuth();
+  const [name, setName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated || !userId) {
+      setName(null);
+      return;
+    }
+    let cancelled = false;
+    userApi
+      .getUser(userId)
+      .then((user) => {
+        if (!cancelled) setName(user.name);
+      })
+      .catch(() => {
+        if (!cancelled) setName(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, userId]);
 
   const scrollTo = (id: string) => {
     document
@@ -111,7 +132,7 @@ export function NavBar() {
           {isAuthenticated ? (
             <>
               <span className="hidden text-sm text-gray-600 sm:inline">
-                Ciao, utente
+                {name ? `Ciao, ${name}` : 'Ciao'}
               </span>
               <button
                 type="button"
