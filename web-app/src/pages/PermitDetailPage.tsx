@@ -5,7 +5,7 @@ import { NavBar } from '../components/NavBar';
 import { SpidLock } from '../components/SpidLock';
 import { useAuth } from '../context/AuthContext';
 import { permitsApi } from '../api/permits';
-import { formatDateIt } from '../utils/date';
+import { formatDateIt, isPastDate } from '../utils/date';
 import {
   zoneLabel,
   permitTypeLabel,
@@ -48,6 +48,12 @@ export function PermitDetailPage() {
   useEffect(() => {
     loadPermit();
   }, [loadPermit]);
+
+  // Permits stay ACTIVE server-side past their endDate; show expired ones as such.
+  const effectiveStatus =
+    permit && permit.status === 'ACTIVE' && isPastDate(permit.endDate)
+      ? 'EXPIRED'
+      : permit?.status ?? '';
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 text-gray-900">
@@ -104,10 +110,10 @@ export function PermitDetailPage() {
                   </div>
                   <span
                     className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${permitStatusStyle(
-                      permit.status
+                      effectiveStatus
                     )}`}
                   >
-                    {permitStatusLabel(permit.status)}
+                    {permitStatusLabel(effectiveStatus)}
                   </span>
                 </div>
 
@@ -132,7 +138,7 @@ export function PermitDetailPage() {
                 <DetailRow label="ID permesso" value={permit.permitId} mono />
                 <DetailRow label="Zona" value={zoneLabel(permit.zone)} />
                 <DetailRow label="Tipo" value={permitTypeLabel(permit.type)} />
-                <DetailRow label="Stato" value={permitStatusLabel(permit.status)} />
+                <DetailRow label="Stato" value={permitStatusLabel(effectiveStatus)} />
                 <DetailRow label="Data inizio" value={formatDateIt(permit.startDate)} />
                 <DetailRow label="Data fine" value={formatDateIt(permit.endDate)} />
                 <DetailRow label="Numero di canne" value={String(permit.numberOfRods)} />
