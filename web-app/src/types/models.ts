@@ -146,12 +146,8 @@ export interface UpdateLicensePayload {
   expirationDate: string;
 }
 
-// TODO(tech-debt): consolidate Permit type naming across user/admin sides
-
-// Fishing permit management (admin) — mirrors the server DTOs
-// Mirrors server.models.output.FishingPermitJson
-export type FishingPermit = PermitListItem;
-export interface PermitListItem {
+// Fishing permit object — mirrors server.models.output.FishingPermitJson
+export interface FishingPermit {
   permitId: string;
   userId: string;
   licenseId: string;
@@ -167,9 +163,8 @@ export interface PermitListItem {
   qrCodeToken: string;
 }
 
-// Mirrors server.models.input.FishingPermitRequestJson
+// Permit creation payload — mirrors server.models.input.FishingPermitRequestJson
 // licenseId is intentionally omitted: the server derives it from the user's license.
-export type PermitRequestPayload = CreatePermitPayload;
 export interface CreatePermitPayload {
   userId: string;
   zone: string;

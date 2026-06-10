@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { permitApi } from '../../../api/permit';
+import { permitsApi } from '../../../api/permits';
 import { NavBarDashboard } from '../../components/NavBarDashboard';
 import { DeletePermitButton } from '../../components/DeletePermitButton';
-import type { PermitListItem } from '../../../types/models';
+import type { FishingPermit } from '../../../types/models';
 
 export const PermitInfoPage = () => {
   const { permitId } = useParams<{ permitId: string }>();
   const navigate = useNavigate();
 
-  const [permit, setPermit] = useState<PermitListItem | null>(null);
+  const [permit, setPermit] = useState<FishingPermit | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,7 +18,7 @@ export const PermitInfoPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const all = await permitApi.listPermits();
+      const all = await permitsApi.listPermits();
       const found = all.find((p) => p.permitId === permitId) ?? null;
       setPermit(found);
       if (!found) setError('Permesso non trovato.');

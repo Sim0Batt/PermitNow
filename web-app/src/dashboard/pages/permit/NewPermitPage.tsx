@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { permitApi } from '../../../api/permit';
+import { permitsApi } from '../../../api/permits';
 import { NavBarDashboard } from '../../components/NavBarDashboard';
 import { PermitForm, type PermitFormValues } from '../../components/PermitForm';
 
@@ -14,7 +14,7 @@ export const NewPermitPage = () => {
     setError(null);
     setSubmitting(true);
     try {
-      await permitApi.createPermit(values);
+      await permitsApi.createPermit(values);
       navigate('/dashboard/permits');
     } catch (err: unknown) {
       const msg =

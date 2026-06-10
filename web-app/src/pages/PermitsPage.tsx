@@ -12,7 +12,8 @@ import {
   permitStatusLabel,
   permitStatusStyle,
 } from '../utils/permits';
-import type { FishingPermit, PermitRequestPayload } from '../types/models';
+import { isPastDate } from '../utils/date';
+import type { FishingPermit, CreatePermitPayload } from '../types/models';
 
 const BRAND = '#1D9E75';
 
@@ -68,7 +69,7 @@ export function PermitsPage() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const payload: PermitRequestPayload = {
+      const payload: CreatePermitPayload = {
         userId,
         zone: form.zone,
         type: form.type,
@@ -264,6 +265,11 @@ export function PermitsPage() {
 
 function PermitCard({ permit }: { permit: FishingPermit }) {
   const navigate = useNavigate();
+  // Permits stay ACTIVE server-side past their endDate; show expired ones as such.
+  const status =
+    permit.status === 'ACTIVE' && isPastDate(permit.endDate)
+      ? 'EXPIRED'
+      : permit.status;
 
   return (
     <li
@@ -282,9 +288,9 @@ function PermitCard({ permit }: { permit: FishingPermit }) {
           <p className="mt-0.5 text-sm text-gray-500">{permitTypeLabel(permit.type)}</p>
         </div>
         <span
-          className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${permitStatusStyle(permit.status)}`}
+          className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${permitStatusStyle(status)}`}
         >
-          {permitStatusLabel(permit.status)}
+          {permitStatusLabel(status)}
         </span>
       </div>
 
