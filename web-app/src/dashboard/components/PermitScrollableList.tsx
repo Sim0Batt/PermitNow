@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { permitApi } from '../../api/permit';
-import type { PermitListItem } from '../../types/models';
+import { permitsApi } from '../../api/permits';
+import type { FishingPermit } from '../../types/models';
 
 interface PermitsListProps {
   limit: number;
@@ -25,12 +25,12 @@ export const PermitScrollableList = ({
   limit = 10,
   maxHeight = '400px',
 }: PermitsListProps) => {
-  const [permits, setPermits] = useState<PermitListItem[]>([]);
+  const [permits, setPermits] = useState<FishingPermit[]>([]);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
     const fetchPermits = async () => {
-      const data = await permitApi.listPermits();
+      const data = await permitsApi.listPermits();
       setPermits(limit === 0 ? data : data.slice(0, limit));
     };
 

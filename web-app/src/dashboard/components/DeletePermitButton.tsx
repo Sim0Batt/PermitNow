@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { permitApi } from '../../api/permit';
+import { permitsApi } from '../../api/permits';
 import { ConfirmDialog } from './ConfirmDialog';
 
 interface DeletePermitButtonProps {
@@ -23,7 +23,7 @@ export const DeletePermitButton = ({
     setLoading(true);
     setError(null);
     try {
-      await permitApi.deletePermit(permitId);
+      await permitsApi.deletePermit(permitId);
       setOpen(false);
       onSuccess?.();
     } catch (e) {

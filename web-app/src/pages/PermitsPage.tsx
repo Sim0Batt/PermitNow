@@ -12,7 +12,7 @@ import {
   permitStatusLabel,
   permitStatusStyle,
 } from '../utils/permits';
-import type { FishingPermit, PermitRequestPayload } from '../types/models';
+import type { FishingPermit, CreatePermitPayload } from '../types/models';
 
 const BRAND = '#1D9E75';
 
@@ -68,7 +68,7 @@ export function PermitsPage() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const payload: PermitRequestPayload = {
+      const payload: CreatePermitPayload = {
         userId,
         zone: form.zone,
         type: form.type,
