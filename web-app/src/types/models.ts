@@ -144,6 +144,7 @@ export interface UpdateLicensePayload {
   noKill: boolean;
   bookCode: string;
   expirationDate: string;
+  status: string;
 }
 
 // Fishing permit object — mirrors server.models.output.FishingPermitJson

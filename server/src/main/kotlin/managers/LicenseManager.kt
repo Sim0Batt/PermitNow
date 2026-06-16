@@ -163,7 +163,7 @@ class LicenseManager(val connection: DatabaseConfig, val permitNowConfiguration:
             val updated = FishingLicenseDocument(
                 _id = license._id,
                 qrCodeToken = license.qrCodeToken,
-                status = license.status,
+                status = data.status,
                 licenseNumber = data.licenseNumber,
                 releasedBy = data.releasedBy,
                 season = data.season,

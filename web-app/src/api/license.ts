@@ -33,9 +33,10 @@ export const licenseApi = {
   async uploadLicense(userId: string, file: File): Promise<void> {
     const formData = new FormData();
     formData.append('userId', userId);
-    formData.append('file', file);
-    // Let axios set the multipart boundary in the Content-Type header.
-    await apiClient.post('/license/fishing', formData);
+    formData.append('image', file);
+    await apiClient.post('/license/fishing', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
   },
 
   async updateLicense(userId: string, payload: UpdateLicensePayload): Promise<void> {

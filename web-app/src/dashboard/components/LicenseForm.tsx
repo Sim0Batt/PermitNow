@@ -7,6 +7,7 @@ export interface LicenseFormValues {
   noKill: boolean;
   bookCode: string;
   expirationDate: string;
+  status: string;
 }
 
 const EMPTY: LicenseFormValues = {
@@ -16,6 +17,7 @@ const EMPTY: LicenseFormValues = {
   noKill: false,
   bookCode: '',
   expirationDate: '',
+  status: 'PENDING',
 };
 
 interface LicenseFormProps {
@@ -84,6 +86,19 @@ export const LicenseForm = ({
         />
         No kill
       </label>
+
+      <div className="flex flex-col gap-1">
+        <label className="text-sm font-medium text-gray-700">Stato</label>
+        <select
+          value={values.status}
+          onChange={(e) => set('status', e.target.value)}
+          className="rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="PENDING">In verifica</option>
+          <option value="VALID">Attiva</option>
+          <option value="DELETED">Eliminata</option>
+        </select>
+      </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 

@@ -28,6 +28,7 @@ export const EditLicensePage = () => {
         noKill: license.noKill,
         bookCode: license.bookCode,
         expirationDate: license.expirationDate,
+        status: license.status ?? 'PENDING',
       });
     } catch {
       setLoadError('Errore nel caricamento della licenza.');
