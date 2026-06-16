@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://permitnow-ids.duckdns.org';
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'https://permitnow-ids.duckdns.org';
 
 export const apiClient = axios.create({
   // Keep this aligned with backend host/port; VITE_API_BASE_URL can override per environment.
